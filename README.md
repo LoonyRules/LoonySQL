@@ -22,10 +22,10 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
  * **Tables**
    * Creation
  * **Queries**
-   * SELECT (with **@Primary** support).
+   * SELECT
    * DELETE
 
 ### TODO
  * Table alterations, deleting
  * Full Primary key support
- * Insert, Update, INSERT ON DUPLICATE KEY
+ * Insert, Update, INSERT [...] ON DUPLICATE KEY [...]
