@@ -33,3 +33,4 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
  * Table alterations, deleting
  * Full Primary key support
  * Insert, Update, INSERT [...] ON DUPLICATE KEY [...]
+ * Save an object
