@@ -5,6 +5,7 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
  * **Codecs**
    * StringCodec (`String.class`)
    * IntCodec (`int.class`)
+   * IntegerCodec (`Integer.class`)
    * BooleanCodec (`boolean.class`)
    * DoubleCodec (`double.class`)
    * FloatCodec (`float.class`)
@@ -22,8 +23,9 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
    * Creation
  * **Queries**
    * SELECT (with **@Primary** support).
+   * DELETE
 
 ### TODO
  * Table alterations, deleting
  * Full Primary key support
- * Insert, Update, INSERT ON DUPLICATE KEY, Delete
+ * Insert, Update, INSERT ON DUPLICATE KEY
