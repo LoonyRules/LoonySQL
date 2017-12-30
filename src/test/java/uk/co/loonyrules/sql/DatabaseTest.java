@@ -29,24 +29,28 @@ public class DatabaseTest
         database.updateTable(User.class);
 
         // Selecting all User rows
-        selectAll(User.class);
+        selectAll("Select all User rows", User.class);
 
-        // Selecting all InformationSchema.TABLES rows but skipping and limiting a random amount
-        selectAll(Tables.class, new Query().skip(random.nextInt(50)).limit(random.nextInt(100)));
+        // Selecting InformationSchema.TABLES rows but skipping and limiting a random amount
+        int skip = random.nextInt(50);
+        selectAll("Select information_schema.TABLES with skipping and limiting.", Tables.class, new Query().skip(skip).limit(random.nextInt(skip + 50)));
+
+        // Delete User rows
+        database.delete(User.class);
     }
 
-    private void selectAll(Class<?> clazz)
+    private void selectAll(String prefix, Class<?> clazz)
     {
-        selectAll(clazz, new Query());
+        selectAll(prefix, clazz, new Query());
     }
 
-    private void selectAll(Class<?> clazz, Query query)
+    private void selectAll(String prefix, Class<?> clazz, Query query)
     {
         // Get all User results
         List<?> results = database.find(clazz, query);
 
         // Print result count
-        System.out.println("Results: " + results.size());
+        System.out.println(prefix + " results: " + results.size());
 
         int i = 0;
         for (Object result : results)

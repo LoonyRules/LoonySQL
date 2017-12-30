@@ -174,7 +174,7 @@ public class Database
         Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
 
         // Not found so throw an error
-        Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for class " + clazz.getSimpleName() + " when find results.");
+        Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + clazz + " when find results.");
 
         // Get the Table annotation
         Table table = tableOptional.get();
@@ -215,25 +215,67 @@ public class Database
             // Print the stacktrace
             e.printStackTrace();
         } finally {
-            try {
-                // Closing our Connection
-                if(connection != null && !connection.isClosed())
-                    connection.close();
-
-                // Closing our PreparedStatement
-                if(preparedStatement != null && !preparedStatement.isClosed())
-                    preparedStatement.close();
-
-                // Closing our ResultSet
-                if(resultSet != null && !resultSet.isClosed())
-                    resultSet.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            closeResources(connection, preparedStatement, resultSet);
         }
 
         // Return our results
         return results;
+    }
+
+    /**
+     * Finds all rows associated with the clazz @Table data and deletes them
+     * @param clazz to get data for
+     * @return number of rows deleted
+     */
+    public long delete(Class<?> clazz)
+    {
+        return delete(clazz, new Query());
+    }
+
+    /**
+     * Finds all rows associated with the clazz @Table data and deletes them
+     * @param clazz to get data for
+     * @param query filter for the query
+     * @return all found results
+     */
+    public long delete(Class<?> clazz, Query query)
+    {
+        // Number of rows deleted
+        long deletedCount = 0;
+
+        // Get the Table annotation wrapped in an Optional
+        Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
+
+        // Not found so throw an error
+        Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + clazz + " when deleting results.");
+
+        // Get the Table annotation
+        Table table = tableOptional.get();
+
+        // Our SQL objects used
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        // Wrapping in a SQLException try and catch
+        try {
+            // Get a new connection
+            connection = getConnection();
+
+            // Preparing our statement
+            preparedStatement = prepare(connection, String.format("DELETE FROM %s %s", table.name(), query.toString()), query.getWheres().values().toArray());
+
+            // Execute our PreparedStatement
+            deletedCount = preparedStatement.executeLargeUpdate();
+        } catch (SQLException e) {
+            // Print the stacktrace
+            e.printStackTrace();
+        } finally {
+            closeResources(connection, preparedStatement, resultSet);
+        }
+
+        // Return our results
+        return deletedCount;
     }
 
     /**
@@ -244,6 +286,9 @@ public class Database
      */
     public boolean updateTable(Class<?> clazz)
     {
+        // Whether anything was modified or not
+        boolean modified = false;
+
         // Get the Table annotation
         Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
 
@@ -266,9 +311,6 @@ public class Database
         // No results so lets Create the Table
         if(results.isEmpty())
         {
-            // Whether anything was modified or not
-            boolean modified;
-
             Connection connection = null;
             PreparedStatement preparedStatement = null;
 
@@ -310,16 +352,10 @@ public class Database
         if(table.modifyType() == ModifyType.NONE)
             return false;
 
-        // Print result count
-        System.out.println("Results: " + results.size());
+        // TODO: Manage column addition/removal
 
-        int i = 0;
-        for (Tables result : results) {
-            System.out.println(" " + (++i) + " -> " + result.toString());
-        }
-
-        // Get the information schema
-        return true;
+        // Return modified boolean
+        return modified;
     }
 
     /**
@@ -488,6 +524,35 @@ public class Database
                 System.out.println("Error occurred when decoding " + field);
                 e.printStackTrace();
             }
+        }
+    }
+
+    private void closeResources(Connection connection)
+    {
+        closeResources(connection, null);
+    }
+
+    private void closeResources(Connection connection, PreparedStatement preparedStatement)
+    {
+        closeResources(connection, preparedStatement, null);
+    }
+
+    private void closeResources(Connection connection, PreparedStatement preparedStatement, ResultSet resultSet)
+    {
+        try {
+            // Closinzg our Connection
+            if(connection != null && !connection.isClosed())
+                connection.close();
+
+            // Closing our PreparedStatement
+            if(preparedStatement != null && !preparedStatement.isClosed())
+                preparedStatement.close();
+
+            // Closing our ResultSet
+            if(resultSet != null && !resultSet.isClosed())
+                resultSet.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 

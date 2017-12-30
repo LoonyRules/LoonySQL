@@ -56,6 +56,7 @@ public abstract class Codec<T>
     static {
         new StringCodec();
         new IntCodec();
+        new IntegerCodec();
         new BooleanCodec();
         new DoubleCodec();
         new FloatCodec();
