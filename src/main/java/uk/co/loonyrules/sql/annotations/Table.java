@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 /**
  * Marks a Class as a {@link uk.co.loonyrules.sql.Database} Object
  */
-@Target(ElementType.FIELD)
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Table
 {

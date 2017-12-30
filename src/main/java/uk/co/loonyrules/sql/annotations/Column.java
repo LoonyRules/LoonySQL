@@ -19,6 +19,12 @@ public @interface Column
      *
      * @return modified name of the {@link Column}
      */
-    String value() default "";
+    String name() default "";
+
+    /**
+     * Max length of data allowed in this {@link Column}
+     * @return max length of data allowed
+     */
+    int maxLength() default 255;
 
 }

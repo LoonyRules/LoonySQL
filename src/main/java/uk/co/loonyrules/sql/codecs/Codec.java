@@ -65,15 +65,35 @@ public abstract class Codec<T>
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private Class<?> type;
+    private String sqlType;
+    private int maxLength;
 
     /**
      * Construct a new Codec with the type it'll be managing
      * @param type type to Encode and Decode
+     * @param sqlType SQL type we're Encoding
      */
-    public Codec(Class<?> type)
+    public Codec(Class<?> type, String sqlType)
+    {
+        this(type, sqlType, 0);
+    }
+
+    /**
+     * Construct a new Codec with the type it'll be managing
+     * @param type type to Encode and Decode
+     * @param sqlType SQL type we're Encoding
+     * @param maxLength the maximum length allowed for the data
+     */
+    public Codec(Class<?> type, String sqlType, int maxLength)
     {
         // The type this Codec will be managing
         this.type = type;
+
+        // The SQL type this Codec will be storing
+        this.sqlType = sqlType;
+
+        // The maximum length allowed for this SQL type
+        this.maxLength = maxLength;
 
         // Put into the codecs map
         codecs.put(type, this);
@@ -86,6 +106,34 @@ public abstract class Codec<T>
     public Class<?> getType()
     {
         return type;
+    }
+
+    /**
+     * Get the SQL column type for this Codec
+     * @return the SQL column type
+     */
+    public String getSQLType()
+    {
+        return sqlType;
+    }
+
+    /**
+     * Get the maximum data length allowed for this SQL type
+     * @return maximum data length allowed
+     */
+    public int getMaxLength()
+    {
+        return maxLength;
+    }
+
+    /**
+     * Automatically calculate the maximum length allowed
+     * @param input the input length
+     * @return the max length
+     */
+    public int calculateMaxLength(int input)
+    {
+        return maxLength > input ? maxLength : input;
     }
 
     /**

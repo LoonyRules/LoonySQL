@@ -18,7 +18,7 @@ public class UUIDCodec extends Codec<UUID>
      */
     public UUIDCodec()
     {
-        super(UUID.class);
+        super(UUID.class, "varchar");
     }
 
     /**

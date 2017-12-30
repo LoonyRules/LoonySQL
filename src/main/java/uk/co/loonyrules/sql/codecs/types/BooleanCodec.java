@@ -17,7 +17,7 @@ public class BooleanCodec extends Codec<Boolean>
      */
     public BooleanCodec()
     {
-        super(boolean.class);
+        super(boolean.class, "tinyint", 1);
     }
 
     /**

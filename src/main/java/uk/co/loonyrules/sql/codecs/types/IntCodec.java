@@ -17,7 +17,7 @@ public class IntCodec extends Codec<Integer>
      */
     public IntCodec()
     {
-        super(int.class);
+        super(int.class, "int");
     }
 
     /**

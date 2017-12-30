@@ -1,9 +1,10 @@
 package uk.co.loonyrules.sql;
 
 import org.junit.Test;
-import uk.co.loonyrules.sql.utils.MapUtil;
+import uk.co.loonyrules.sql.models.Tables;
+import uk.co.loonyrules.sql.models.User;
 
-import java.sql.*;
+import java.util.List;
 
 public class DatabaseTest
 {
@@ -22,62 +23,27 @@ public class DatabaseTest
         // Attempt to connect
         database.connect();
 
-        // Selecting all rows
-        selectAll();
+        // Update the Table for our User
+        database.updateTable(User.class);
+
+        // Selecting all User rows
+        selectAll(User.class);
+
+        // Selecting all InformationSchema rows
+        selectAll(Tables.class);
     }
 
-    public void selectAll()
+    public void selectAll(Class<?> clazz)
     {
-        // Variables used
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-        ResultSet resultSet = null;
+        // Get all User results
+        List<?> results = database.find(clazz);
 
-        try {
-            // Getting a new Connection
-            connection = database.getConnection();
+        // Print result count
+        System.out.println("Results: " + results.size());
 
-            // Preparing our PreparedStatement
-            preparedStatement = connection.prepareStatement("SELECT * FROM `users`");
-
-            // Execute the Query
-            resultSet = preparedStatement.executeQuery();
-
-            // Just print out the data in the ResultSet
-            print(resultSet);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                // Closing our Connection
-                if(connection != null && !connection.isClosed())
-                    connection.close();
-
-                // Closing our PreparedStatement
-                if(preparedStatement != null && !preparedStatement.isClosed())
-                    preparedStatement.close();
-
-                // Closing our ResultSet
-                if(resultSet != null && !resultSet.isClosed())
-                    resultSet.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void print(ResultSet resultSet)
-    {
-        try {
-            // Our row count
-            int count = 0;
-
-            // Iterate through all results and print out the data
-            while (resultSet.next())
-                System.out.println("Row " + ++count + ": " + MapUtil.toMap(resultSet));
-        } catch(SQLException e) {
-            e.printStackTrace();
-        }
+        int i = 0;
+        for (Object result : results)
+            System.out.println(" " + (++i) + " -> " + result.toString());
     }
 
 }
