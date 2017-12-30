@@ -1,10 +1,9 @@
 package uk.co.loonyrules.sql;
 
-import com.google.common.collect.Maps;
 import org.junit.Test;
+import uk.co.loonyrules.sql.utils.MapUtil;
 
 import java.sql.*;
-import java.util.Map;
 
 public class DatabaseTest
 {
@@ -70,19 +69,12 @@ public class DatabaseTest
     private void print(ResultSet resultSet)
     {
         try {
+            // Our row count
+            int count = 0;
 
-            int id = 0;
+            // Iterate through all results and print out the data
             while (resultSet.next())
-            {
-                ResultSetMetaData metaData = resultSet.getMetaData();
-                Map<String, Object> columnData = Maps.newHashMap();
-
-                for(int i = 1; i <= metaData.getColumnCount(); ++i) {
-                    columnData.put(metaData.getColumnLabel(i), resultSet.getObject(i));
-                }
-
-                System.out.println("Row " + ++id + ": " + columnData);
-            }
+                System.out.println("Row " + ++count + ": " + MapUtil.toMap(resultSet));
         } catch(SQLException e) {
             e.printStackTrace();
         }
