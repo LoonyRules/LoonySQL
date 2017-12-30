@@ -20,6 +20,7 @@ public class Database
 
     private HikariDataSource hikariDataSource;
     private ExecutorService executorService;
+    private Thread shutdownThread;
 
     /**
      * Initialise a new Database connection using a set of {@link Credentials}
@@ -60,7 +61,7 @@ public class Database
     public Connection getConnection() throws SQLException
     {
         // Ensuring we're connected before retrieving a Connection
-        Preconditions.checkArgument(!isConnected(), "Connection hasn't been initialised.");
+        Preconditions.checkArgument(isConnected(), "Connection hasn't been initialised.");
 
         // Return a new Connection
         return hikariDataSource.getConnection();
@@ -81,12 +82,15 @@ public class Database
     public void connect()
     {
         // Ensuring we're not already connected
-        Preconditions.checkArgument(isConnected(), "Already connected to the Database.");
+        Preconditions.checkArgument(!isConnected(), "Already connected to the Database.");
 
         // Initialise our HikariConfig
         HikariConfig hikariConfig = new HikariConfig();
 
-        // Setting the Jbdc url
+        // Setting the dataSource's class name
+        hikariConfig.setDataSourceClassName("com.mysql.cj.jdbc.MysqlDataSource");
+
+        // Setting the Jdbc url
         hikariConfig.setJdbcUrl(String.format("jdbc:mysql//%s:%s/%s", credentials.getHost(), credentials.getPort(), credentials.getDatabase()));
 
         // Adding our databaseName as a property
@@ -106,7 +110,7 @@ public class Database
         executorService = Executors.newCachedThreadPool();
 
         // Add a shutdown hook
-        Runtime.getRuntime().addShutdownHook(new Thread(this::disconnect));
+        Runtime.getRuntime().addShutdownHook(shutdownThread = new Thread(this::disconnect));
     }
 
     /**
@@ -115,13 +119,20 @@ public class Database
     public void disconnect()
     {
         // Ensuring we're connected
-        Preconditions.checkArgument(!isConnected(), "Database connection has already been disconnected.");
+        Preconditions.checkArgument(isConnected(), "Database connection has already been disconnected.");
 
         // Closing the hikariDataSource
         hikariDataSource.close();
 
         // Shutting down the pool
         executorService.shutdown();
+
+        try {
+            // Removing our ShutdownHook
+            Runtime.getRuntime().removeShutdownHook(shutdownThread);
+        } catch(IllegalStateException e) {
+
+        }
     }
 
 }
