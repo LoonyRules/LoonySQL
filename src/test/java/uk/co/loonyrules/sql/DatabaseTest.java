@@ -35,13 +35,12 @@ public class DatabaseTest
         selectAll(Tables.class, new Query().skip(random.nextInt(50)).limit(random.nextInt(100)));
     }
 
-    public void selectAll(Class<?> clazz)
+    private void selectAll(Class<?> clazz)
     {
         selectAll(clazz, new Query());
     }
 
-
-    public void selectAll(Class<?> clazz, Query query)
+    private void selectAll(Class<?> clazz, Query query)
     {
         // Get all User results
         List<?> results = database.find(clazz, query);
