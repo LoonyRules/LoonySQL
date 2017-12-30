@@ -4,10 +4,6 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
 ### Features
 
 ### TODO
- * Table creation 
- * Table alterations
+ * Table creation, alterations, deleting
  * Primary key support
- * Insert
- * Update
- * Drop
- * Select
+ * Insert, Update, Select, Delete
