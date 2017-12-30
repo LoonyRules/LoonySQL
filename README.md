@@ -24,6 +24,10 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
  * **Queries**
    * SELECT
    * DELETE
+ * **Other**
+   Reload an object
+   Delete a row
+   Delete all table contents
 
 ### TODO
  * Table alterations, deleting
