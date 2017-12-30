@@ -22,8 +22,9 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
  * **Tables**
    * Creation
  * **Queries**
-   * SELECT
-   * DELETE
+   * SELECT (find, findFirst)
+   * DELETE (delete all rows, delete a specified row)
+   
  * **Other**
    * Reload an object
    * Delete a row

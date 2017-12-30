@@ -85,7 +85,13 @@ public class DatabaseTest
 
         // Delete our user object
         {
-            // TODO: database.delete(user);
+            // Should be 1
+            System.out.println("Find result prior to deletion: " + (database.find(user).size()));
+
+            database.delete(user);
+
+            // Should be 0
+            System.out.println("Find result post deletion: " + (database.find(user).size()));
         }
 
         // Insert example

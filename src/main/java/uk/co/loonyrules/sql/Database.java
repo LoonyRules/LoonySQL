@@ -186,6 +186,17 @@ public class Database
     }
 
     /**
+     * Delete a row specified with an Object that has a @Primary @Column Field
+     * @param object to generate Query off of for deletion
+     * @return number of rows deleted
+     */
+    public <T> List<T> find(Object object)
+    {
+        return find((Class<T>) object.getClass(), generatePrimaryQuery(object));
+    }
+
+
+    /**
      * Find all rows and get back a list of the object provided
      * @param clazz to get data for
      * @param query filter for the query
@@ -260,10 +271,21 @@ public class Database
     }
 
     /**
+     * Delete a row specified with an Object that has a @Primary @Column Field
+     * @param object to generate Query off of for deletion
+     * @return number of rows deleted
+     */
+    public long delete(Object object)
+    {
+        // Delete via an auto-generated Query using a @Primary Field
+        return delete(object.getClass(), generatePrimaryQuery(object));
+    }
+
+    /**
      * Finds all rows associated with the clazz @Table data and deletes them
      * @param clazz to get data for
      * @param query filter for the query
-     * @return all found results
+     * @return number of rows deleted
      */
     public long delete(Class<?> clazz, Query query)
     {
@@ -391,26 +413,7 @@ public class Database
      */
     public void reload(Object object)
     {
-        // Get the Primary Field
-        Optional<Field> primaryOptional = ReflectionUtil.getPrimaryField(object.getClass());
-
-        // No Primary field so throw unsupported operation
-        if(!primaryOptional.isPresent())
-            throw new UnsupportedOperationException("No @Primary Field found in " + object.getClass() + ". Use Database#reload(Object object, Query query) instead.");
-
-        // Get our Field
-        Field field = primaryOptional.get();
-
-        // Getting the value of the Field
-        Object fieldValue = null;
-        try {
-            fieldValue = field.get(object);
-        } catch (IllegalAccessException e) {
-            fieldValue = null;
-        }
-
-        // We have a Primary key so generate a Query instance depending on it
-        reload(object, new Query().where(ReflectionUtil.getColumnName(field), fieldValue));
+        reload(object, generatePrimaryQuery(object));
     }
 
     public void reload(Object object, Query query)
@@ -453,6 +456,30 @@ public class Database
         } finally {
             closeResources(connection, preparedStatement, resultSet);
         }
+    }
+
+    private Query generatePrimaryQuery(Object object)
+    {
+        // Get the Primary Field
+        Optional<Field> primaryOptional = ReflectionUtil.getPrimaryField(object.getClass());
+
+        // No Primary field so throw unsupported operation
+        if(!primaryOptional.isPresent())
+            throw new UnsupportedOperationException("No @Primary Field found in " + object.getClass() + ".");
+
+        // Get our Field
+        Field field = primaryOptional.get();
+
+        // Getting the value of the Field
+        Object fieldValue = null;
+        try {
+            fieldValue = field.get(object);
+        } catch (IllegalAccessException e) {
+            fieldValue = null;
+        }
+
+        // We have a Primary key so generate a Query and return
+        return new Query().where(ReflectionUtil.getColumnName(field), fieldValue);
     }
 
     /**
