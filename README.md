@@ -18,8 +18,12 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
    * Default name to the Field name
  * **@Primary**
    * (Non) AutoIncrement support
+ * **Tables**
+   * Creation
+ * **Queries**
+   * SELECT (with **@Primary** support).
 
 ### TODO
- * Table creation, alterations, deleting
- * Primary key support
- * Insert, Update, Select, Delete
+ * Table alterations, deleting
+ * Full Primary key support
+ * Insert, Update, INSERT ON DUPLICATE KEY, Delete
