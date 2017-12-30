@@ -1,5 +1,5 @@
 # LoonySQL
-I got bored once, made a quick, but bad LoonySQL. I got bored of it then made this.
+I got bored once, made a quick, but bad SQL library. I disliked it and now I'm making this rewrite.
 
 ### Features
 
