@@ -9,7 +9,7 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
    * BooleanCodec (`boolean.class`)
    * DoubleCodec (`double.class`)
    * FloatCodec (`float.class`)
-   * UUIDCodec (`UUID.class`  )
+   * UUIDCodec (`UUID.class`)
  * **@Table**
    * Name
    * Create if not exists
