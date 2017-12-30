@@ -109,11 +109,17 @@ public class Query
     {
         StringBuilder stringBuilder = new StringBuilder(buildWhere());
 
-        if(skip != 0)
-            stringBuilder.append(" SKIP ").append(getSkip());
+        // Managing skip/limit
+        if(skip != 0 || limit != 0)
+        {
+            stringBuilder.append(" LIMIT ");
 
-        if(limit != 0)
-            stringBuilder.append(" LIMIT ").append(getLimit());
+            if(skip != 0)
+                stringBuilder.append(skip);
+
+            if(limit != 0)
+                stringBuilder.append(skip != 0 ? "," : "").append(limit);
+        }
 
         return stringBuilder.toString();
     }

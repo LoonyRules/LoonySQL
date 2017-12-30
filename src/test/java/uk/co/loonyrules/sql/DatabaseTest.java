@@ -5,10 +5,12 @@ import uk.co.loonyrules.sql.models.Tables;
 import uk.co.loonyrules.sql.models.User;
 
 import java.util.List;
+import java.util.Random;
 
 public class DatabaseTest
 {
 
+    private final Random random = new Random();
     private Database database;
 
     @Test
@@ -29,14 +31,20 @@ public class DatabaseTest
         // Selecting all User rows
         selectAll(User.class);
 
-        // Selecting all InformationSchema rows
-        selectAll(Tables.class);
+        // Selecting all InformationSchema.TABLES rows but skipping and limiting a random amount
+        selectAll(Tables.class, new Query().skip(random.nextInt(50)).limit(random.nextInt(100)));
     }
 
     public void selectAll(Class<?> clazz)
     {
+        selectAll(clazz, new Query());
+    }
+
+
+    public void selectAll(Class<?> clazz, Query query)
+    {
         // Get all User results
-        List<?> results = database.find(clazz);
+        List<?> results = database.find(clazz, query);
 
         // Print result count
         System.out.println("Results: " + results.size());
