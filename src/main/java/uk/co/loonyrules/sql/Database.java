@@ -402,7 +402,7 @@ public class Database
                     .append("` ")
                     .append(codec.getSQLType())
                     .append("(")
-                    .append(column.maxLength())
+                    .append(codec.calculateMaxLength(column.maxLength()))
                     .append("), ");
 
             // If it's the Primary
