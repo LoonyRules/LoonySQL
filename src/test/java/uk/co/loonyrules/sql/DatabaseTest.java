@@ -4,47 +4,140 @@ import org.junit.Test;
 import uk.co.loonyrules.sql.models.Tables;
 import uk.co.loonyrules.sql.models.User;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
+import java.util.UUID;
 
 public class DatabaseTest
 {
 
     private final Random random = new Random();
+    private final UUID uuid = UUID.fromString("2179a7da-81e4-443b-a459-1b4157e07709");
+
     private Database database;
+    private User user;
 
     @Test
     public void connect()
     {
-        // Credentials for authentication
-        Credentials credentials = new Credentials("localhost", 3306, "loonysql", "root", "");
+        // Initialising database connectivity and methods example
+        {
+            // Credentials for authentication
+            Credentials credentials = new Credentials("localhost", 3306, "loonysql", "root", "");
 
-        // Initialising our Database with our Credentials
-        database = new Database(credentials);
+            // Initialising our Database with our Credentials
+            database = new Database(credentials);
 
-        // Attempt to connect
-        database.connect();
+            // Attempt to connect
+            database.connect();
 
-        // Update the Table for our User
-        database.updateTable(User.class);
+            // Update the Table associated with User object
+            database.updateTable(User.class);
+        }
 
-        // Selecting all User rows
-        selectAll("Select all User rows", User.class);
+        // Select all and skip/limit example
+        {
+            // Selecting all User rows
+            select("Select all User rows", User.class);
 
-        // Selecting InformationSchema.TABLES rows but skipping and limiting a random amount
-        int skip = random.nextInt(50);
-        selectAll("Select information_schema.TABLES with skipping and limiting.", Tables.class, new Query().skip(skip).limit(random.nextInt(skip + 50)));
+            // Selecting `information_schema.TABLES` rows but skipping/limiting random amounts
+            int skip = random.nextInt(5);
+            select("Select information_schema.TABLES with skipping and limiting.", Tables.class, new Query().skip(skip).limit(random.nextInt(skip + 5)));
+        }
 
-        // Delete User rows
-        database.delete(User.class);
+        // Example of how to get a User object with a "WHERE" condition
+        {
+            findUser();
+        }
+
+        // Reloading an Object due to data being updated elsewhere.
+        {
+            // Modifying the random column data in the Table without modifying our user object
+            changeRandom(user.getUUID());
+
+            // Get the old random int (proof that changeRandom(UUID uuid) doesn't modify the user object)
+            int oldRandom = user.getRandom();
+
+            // Reloading the user object (without a Query param initially to use our @Primary field automatically)
+            database.reload(user);
+
+            // Printing out data
+            System.out.println("Random variable in the table was updated and user was reloaded.");
+            System.out.println(" oldRandom: " + oldRandom);
+            System.out.println(" " + user);
+            System.out.println(" new -> old diff: " + (user.getRandom() - oldRandom));
+        }
+
+        // Modifying user object and saving it example (INSERT [...] ON DUPLICATE KEY [...])
+        {
+            // Reversing banned state
+            user.setBanned(!user.isBanned());
+
+            // TODO: Save
+
+            // Print out the user
+            System.out.println("After banned state change: " + user);
+        }
+
+        // Delete our user object
+        {
+            // TODO: database.delete(user);
+        }
+
+        // Insert example
+        {
+            // TODO: database.save(user);
+        }
     }
 
-    private void selectAll(String prefix, Class<?> clazz)
+    private void findUser()
     {
-        selectAll(prefix, clazz, new Query());
+        // Get a User for the UUID
+        Optional<User> userOptional = database.findFirst(User.class, new Query().where("uuid", uuid));
+
+        // Result returned a User else print no user found
+        if(userOptional.isPresent())
+        {
+            user = userOptional.get();
+            System.out.println("UUID \"" + uuid.toString() + "\" was found: " + user);
+        } else System.out.println("No User with the UUID \"" + uuid.toString() + "\" found.");
     }
 
-    private void selectAll(String prefix, Class<?> clazz, Query query)
+    private void changeRandom(UUID uuid)
+    {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+
+        try {
+            // Get a new Connection
+            connection = database.getConnection();
+
+            // Prepare our statement
+            preparedStatement = connection.prepareStatement("UPDATE `users` SET random = ? WHERE uuid = ?");
+
+            // Setting our replacements
+            preparedStatement.setInt(1, random.nextInt(50));
+            preparedStatement.setString(2, uuid.toString());
+
+            // Execute the update
+            preparedStatement.executeUpdate();
+        } catch(SQLException e) {
+            e.printStackTrace();
+        } finally {
+            database.closeResources(connection, preparedStatement);
+        }
+    }
+
+    private void select(String prefix, Class<?> clazz)
+    {
+        select(prefix, clazz, new Query());
+    }
+
+    private void select(String prefix, Class<?> clazz, Query query)
     {
         // Get all User results
         List<?> results = database.find(clazz, query);

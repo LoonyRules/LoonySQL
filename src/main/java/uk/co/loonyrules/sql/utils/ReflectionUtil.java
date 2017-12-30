@@ -5,6 +5,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Maps;
 import uk.co.loonyrules.sql.annotations.Column;
+import uk.co.loonyrules.sql.annotations.Primary;
 import uk.co.loonyrules.sql.annotations.Table;
 import uk.co.loonyrules.sql.storage.CaseInsensitiveMap;
 
@@ -145,6 +146,11 @@ public class ReflectionUtil
     public static String getColumnName(Field field)
     {
         return getColumnAnnotation(field).map(column -> column.name().isEmpty() ? field.getName() : column.name()).orElse(null);
+    }
+
+    public static Optional<Field> getPrimaryField(Class<?> clazz)
+    {
+        return getFields(clazz).values().stream().filter(field -> field.isAnnotationPresent(Primary.class)).findFirst();
     }
 
 }

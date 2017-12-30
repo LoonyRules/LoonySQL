@@ -273,7 +273,7 @@ public class Tables
      */
     @Override
     public String toString() {
-        return "InformationSchema{" +
+        return "Tables{" +
                 "tableCatalog='" + tableCatalog + '\'' +
                 ", tableSchema='" + tableSchema + '\'' +
                 ", tableName='" + tableName + '\'' +

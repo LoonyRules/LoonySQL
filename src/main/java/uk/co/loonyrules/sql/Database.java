@@ -148,6 +148,33 @@ public class Database
     }
 
     /**
+     * Find the first row and parse to the object provided
+     * @param clazz to get data for
+     * @param <T> the type to parse to
+     * @return first found result wrapped in an Optional
+     */
+    public <T> Optional<T> findFirst(Class<T> clazz)
+    {
+        return findFirst(clazz, new Query());
+    }
+
+    /**
+     * Find the first row and parse to the object provided
+     * @param clazz to get data for
+     * @param <T> the type to parse to
+     * @param query filter for the query
+     * @return first found result wrapped in an Optional
+     */
+    public <T> Optional<T> findFirst(Class<T> clazz, Query query)
+    {
+        // Find results associated with the current Query but limit the results
+        List<T> results = find(clazz, query.limit(query.getSkip() + 1));
+
+        // Return the found data
+        return Optional.ofNullable(results.iterator().hasNext() ? results.iterator().next() : null);
+    }
+
+    /**
      * Find all rows and get back a list of the object provided
      * @param clazz to get data for
      * @param <T> the type to parse to
@@ -359,6 +386,76 @@ public class Database
     }
 
     /**
+     * Reload a @Table object to get new data
+     * @param object the object to reload data for
+     */
+    public void reload(Object object)
+    {
+        // Get the Primary Field
+        Optional<Field> primaryOptional = ReflectionUtil.getPrimaryField(object.getClass());
+
+        // No Primary field so throw unsupported operation
+        if(!primaryOptional.isPresent())
+            throw new UnsupportedOperationException("No @Primary Field found in " + object.getClass() + ". Use Database#reload(Object object, Query query) instead.");
+
+        // Get our Field
+        Field field = primaryOptional.get();
+
+        // Getting the value of the Field
+        Object fieldValue = null;
+        try {
+            fieldValue = field.get(object);
+        } catch (IllegalAccessException e) {
+            fieldValue = null;
+        }
+
+        // We have a Primary key so generate a Query instance depending on it
+        reload(object, new Query().where(ReflectionUtil.getColumnName(field), fieldValue));
+    }
+
+    public void reload(Object object, Query query)
+    {
+        // Get the Table annotation wrapped in an Optional
+        Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(object.getClass());
+
+        // Not found so throw an error
+        Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + object.getClass() + " when reloading.");
+
+        // Get the Table annotation
+        Table table = tableOptional.get();
+
+        // Limit our response to 1
+        query.limit(1);
+
+        // Our SQL objects used
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        // Wrapping in a SQLException try and catch
+        try {
+            // Get a new connection
+            connection = getConnection();
+
+            // Preparing our statement
+            preparedStatement = prepare(connection, String.format("SELECT * FROM %s %s", table.name(), query.toString()), query.getWheres().values().toArray());
+
+            // Execute our PreparedStatement
+            resultSet = preparedStatement.executeQuery();
+
+            // If there's results then populate else throw error
+            if (resultSet.next())
+                populate(object, resultSet);
+            else throw new NullPointerException("Couldn't find row matching Query for " + object);
+        } catch (SQLException e) {
+            // Print the stacktrace
+            e.printStackTrace();
+        } finally {
+            closeResources(connection, preparedStatement, resultSet);
+        }
+    }
+
+    /**
      * Generate a PreparedStatement with specified data
      * @return the generated PreparedStatement
      */
@@ -527,17 +624,17 @@ public class Database
         }
     }
 
-    private void closeResources(Connection connection)
+    public void closeResources(Connection connection)
     {
         closeResources(connection, null);
     }
 
-    private void closeResources(Connection connection, PreparedStatement preparedStatement)
+    public void closeResources(Connection connection, PreparedStatement preparedStatement)
     {
         closeResources(connection, preparedStatement, null);
     }
 
-    private void closeResources(Connection connection, PreparedStatement preparedStatement, ResultSet resultSet)
+    public void closeResources(Connection connection, PreparedStatement preparedStatement, ResultSet resultSet)
     {
         try {
             // Closinzg our Connection
