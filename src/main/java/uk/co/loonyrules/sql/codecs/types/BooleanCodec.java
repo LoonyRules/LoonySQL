@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * Codec for Encoding/Decoding a Boolean
+ * Codec for Encoding/Decoding a boolean
  */
 public class BooleanCodec extends Codec<Boolean>
 {
@@ -17,7 +17,7 @@ public class BooleanCodec extends Codec<Boolean>
      */
     public BooleanCodec()
     {
-        super(boolean.class, "tinyint", 1);
+        super("tinyint", 1, boolean.class, Boolean.class);
     }
 
     /**

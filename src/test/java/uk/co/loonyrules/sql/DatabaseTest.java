@@ -77,7 +77,8 @@ public class DatabaseTest
             // Reversing banned state
             user.setBanned(!user.isBanned());
 
-            // TODO: Save
+            // Save
+            database.save(user);
 
             // Print out the user
             System.out.println("After banned state change: " + user);
@@ -96,7 +97,10 @@ public class DatabaseTest
 
         // Insert example
         {
-            // TODO: database.save(user);
+            //
+            database.save(user);
+
+            System.out.println("User has been inserted into the table");
         }
     }
 

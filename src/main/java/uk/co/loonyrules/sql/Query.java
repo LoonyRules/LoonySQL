@@ -1,8 +1,7 @@
 package uk.co.loonyrules.sql;
 
-import com.google.common.collect.Maps;
 
-import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -13,7 +12,7 @@ import java.util.stream.Collectors;
 public class Query
 {
 
-    private final Map<String, Object> wheres = Maps.newHashMap();
+    private final LinkedHashMap<String, Object> wheres = new LinkedHashMap<>();
 
     private int
             skip = 0,
@@ -23,7 +22,7 @@ public class Query
      * Get all "WHERE" conditions
      * @return all "WHERE" conditions
      */
-    public Map<String, Object> getWheres()
+    public LinkedHashMap<String, Object> getWheres()
     {
         return wheres;
     }

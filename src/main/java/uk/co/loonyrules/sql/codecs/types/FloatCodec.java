@@ -17,7 +17,7 @@ public class FloatCodec extends Codec<Float>
      */
     public FloatCodec()
     {
-        super(float.class, "float");
+        super("float", float.class, Float.class);
     }
 
     /**

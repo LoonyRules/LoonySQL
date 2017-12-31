@@ -1,12 +1,14 @@
 package uk.co.loonyrules.sql.codecs;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import uk.co.loonyrules.sql.codecs.types.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Codec's for encoding and decoding Objects
@@ -15,13 +17,13 @@ import java.util.Map;
 public abstract class Codec<T>
 {
 
-    private static final Map<Class<?>, Codec> codecs = Maps.newHashMap();
+    private static final Map<Set<Class<?>>, Codec> codecs = Maps.newHashMap();
 
     /**
      * Get registered Codecs
      * @return All registered Codecs
      */
-    public static Map<Class<?>, Codec> getCodecs()
+    public static Map<Set<Class<?>>, Codec> getCodecs()
     {
         return codecs;
     }
@@ -34,11 +36,8 @@ public abstract class Codec<T>
      */
     public static <T> T getCodec(Class<?> clazz)
     {
-        // Retrieved Codec
-        Codec codec = codecs.get(clazz);
-
         // Return null if not found or cast and return
-        return codec == null ? null : (T) codec;
+        return (T) codecs.values().stream().filter(codec -> codec.isManaging(clazz)).findFirst().orElse(null);
     }
 
     /**
@@ -55,7 +54,6 @@ public abstract class Codec<T>
 
     static {
         new StringCodec();
-        new IntCodec();
         new IntegerCodec();
         new BooleanCodec();
         new DoubleCodec();
@@ -65,48 +63,57 @@ public abstract class Codec<T>
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private Class<?> type;
+    private Set<Class<?>> types;
     private String sqlType;
     private int maxLength;
 
     /**
      * Construct a new Codec with the type it'll be managing
-     * @param type type to Encode and Decode
+     * @param types types to Encode and Decode
      * @param sqlType SQL type we're Encoding
      */
-    public Codec(Class<?> type, String sqlType)
+    public Codec(String sqlType, Class<?>... types)
     {
-        this(type, sqlType, 0);
+        this(sqlType, 0, types);
     }
 
     /**
      * Construct a new Codec with the type it'll be managing
-     * @param type type to Encode and Decode
+     * @param types type to Encode and Decode
      * @param sqlType SQL type we're Encoding
      * @param maxLength the maximum length allowed for the data
      */
-    public Codec(Class<?> type, String sqlType, int maxLength)
+    public Codec(String sqlType, int maxLength, Class<?>... types)
     {
-        // The type this Codec will be managing
-        this.type = type;
-
         // The SQL type this Codec will be storing
         this.sqlType = sqlType;
 
         // The maximum length allowed for this SQL type
         this.maxLength = maxLength;
 
+        this.types = Sets.newHashSet(types);
+
         // Put into the codecs map
-        codecs.put(type, this);
+        codecs.put(this.types, this);
     }
 
     /**
-     * Get the type this Codec is managing
-     * @return type this Codec is managing
+     * Get the types this Codec is managing
+     * @return types this Codec is managing
      */
-    public Class<?> getType()
+    public Set<Class<?>> getTypes()
     {
-        return type;
+        return types;
+    }
+
+    /**
+     * Check if this Codec is managing an Object Type
+     * @param type to check for
+     * @return Whether it managed the type
+     */
+    public boolean isManaging(Class<?> type)
+    {
+        return getTypes().contains(type);
     }
 
     /**

@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * Codec for Encoding/Decoding an Integer
+ * Codec for Encoding/Decoding an int
  */
 public class IntegerCodec extends Codec<Integer>
 {
@@ -17,7 +17,7 @@ public class IntegerCodec extends Codec<Integer>
      */
     public IntegerCodec()
     {
-        super(Integer.class, "int");
+        super("int", int.class, Integer.class);
     }
 
     /**

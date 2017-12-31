@@ -17,7 +17,7 @@ public class StringCodec extends Codec<String>
      */
     public StringCodec()
     {
-        super(String.class, "varchar");
+        super("varchar", String.class);
     }
 
     /**

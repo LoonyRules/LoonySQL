@@ -15,9 +15,7 @@ import uk.co.loonyrules.sql.utils.ReflectionUtil;
 
 import java.lang.reflect.Field;
 import java.sql.*;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -458,6 +456,107 @@ public class Database
         }
     }
 
+    /**
+     * Save an Object with a @Table annotation
+     * @param object to save
+     */
+    public void save(Object object)
+    {
+        // Get the Table annotation wrapped in an Optional
+        Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(object.getClass());
+
+        // Not found so throw an error
+        Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + object.getClass() + " when saving.");
+
+        // Get the Table annotation
+        Table table = tableOptional.get();
+
+        /*
+
+        // Get the Primary field
+        Optional<Field> primaryOptional = ReflectionUtil.getPrimaryField(object.getClass());
+        String primaryName = primaryOptional.isPresent() ? ReflectionUtil.getColumnName(primaryOptional.get()) : null;
+
+        // Building Query's based on INSERT AND UPDATE Field data
+        Query
+                insertQuery = buildQuery(object, true),
+                updateQuery = buildQuery(object, false);
+
+        // INSERT [...] ON DUPLICATE KEY [...]
+
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+
+        try {
+            // Get a new Connection
+            connection = getConnection();
+
+            // Getting our thing
+            LinkedList<Object> objects = new LinkedList<>();
+
+            // For the VALUES replacement
+            objects.addAll(updateQuery.getWheres().values());
+
+            // For the DUPLICATE KEY UPDATE replacement
+            objects.addAll(updateQuery.updateWheres(null));
+
+            // Prepare our PreparedStatement
+            preparedStatement = prepare(
+                    connection,
+                    String.format(
+                            "INSERT INTO `%s` (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s",
+                            /* Table nane */
+                            /*table.name(),
+                            /* Column names */
+                            /*updateQuery.buildKeys(),
+                            /* Value placeholder for each column (Eg: ?, ?, ?) */
+                            /*updateQuery.buildValuesReplaceable(),
+                            /* Build condition string */
+                            /*updateQuery.buildUpdate(null)
+                    ),
+                    objects.toArray()
+            );
+
+            // Execute query
+            preparedStatement.executeLargeUpdate();
+        } catch(SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources(connection, preparedStatement);
+        }*/
+    }
+
+    public void closeResources(Connection connection)
+    {
+        closeResources(connection, null);
+    }
+
+    public void closeResources(Connection connection, PreparedStatement preparedStatement)
+    {
+        closeResources(connection, preparedStatement, null);
+    }
+
+    public void closeResources(Connection connection, PreparedStatement preparedStatement, ResultSet resultSet)
+    {
+        try {
+            // Closinzg our Connection
+            if(connection != null && !connection.isClosed())
+                connection.close();
+
+            // Closing our PreparedStatement
+            if(preparedStatement != null && !preparedStatement.isClosed())
+                preparedStatement.close();
+
+            // Closing our ResultSet
+            if(resultSet != null && !resultSet.isClosed())
+                resultSet.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     private Query generatePrimaryQuery(Object object)
     {
         // Get the Primary Field
@@ -488,6 +587,8 @@ public class Database
      */
     private PreparedStatement prepare(Connection connection, String statement, Object... data) throws SQLException
     {
+        System.out.println("prepare (statement=" + statement + " :: data=" + data + ", size=" + data.length + ")");
+
         // Prepare our PreparedStatement
         PreparedStatement preparedStatement = connection.prepareStatement(statement);
 
@@ -500,6 +601,8 @@ public class Database
             // Get the Codec for this Type
             Codec codec = Codec.getCodec(object.getClass());
 
+            System.out.println(" " + i + " object: " + object + " (" + object.getClass() + ", codec: " + codec + ")");
+
             // Not known so skip
             if(codec == null)
                 continue;
@@ -507,6 +610,8 @@ public class Database
             // Encode the data
             codec.encode(preparedStatement, i, object);
         }
+
+        System.out.println(" final: " + statement);
 
         // Return our statement
         return preparedStatement;
@@ -648,35 +753,6 @@ public class Database
                 System.out.println("Error occurred when decoding " + field);
                 e.printStackTrace();
             }
-        }
-    }
-
-    public void closeResources(Connection connection)
-    {
-        closeResources(connection, null);
-    }
-
-    public void closeResources(Connection connection, PreparedStatement preparedStatement)
-    {
-        closeResources(connection, preparedStatement, null);
-    }
-
-    public void closeResources(Connection connection, PreparedStatement preparedStatement, ResultSet resultSet)
-    {
-        try {
-            // Closinzg our Connection
-            if(connection != null && !connection.isClosed())
-                connection.close();
-
-            // Closing our PreparedStatement
-            if(preparedStatement != null && !preparedStatement.isClosed())
-                preparedStatement.close();
-
-            // Closing our ResultSet
-            if(resultSet != null && !resultSet.isClosed())
-                resultSet.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
     }
 
