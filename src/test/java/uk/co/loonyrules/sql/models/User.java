@@ -13,10 +13,7 @@ public class User
 {
 
     @Column
-    @Primary
-    private int id = 0;
-
-    @Column
+    @Primary(autoIncrement = false)
     private UUID uuid;
 
     @Column
@@ -45,11 +42,6 @@ public class User
     {
         this.uuid = uuid;
         this.lastName = lastName;
-    }
-
-    public int getId()
-    {
-        return id;
     }
 
     public UUID getUUID()
@@ -101,8 +93,7 @@ public class User
     public String toString()
     {
         return "User{" +
-                "id=" + id +
-                ", uuid=" + uuid +
+                "uuid=" + uuid +
                 ", lastName='" + lastName + '\'' +
                 ", random=" + random +
                 ", banned=" + banned +

@@ -83,6 +83,11 @@ public class DatabaseTest
             System.out.println(" new -> old diff: " + (user.getRandom() - oldRandom));
         }
 
+        // Print out all current User data
+        {
+            select("Users after modifying random column", User.class);
+        }
+
         // Modifying user object and saving it example (INSERT [...] ON DUPLICATE KEY [...])
         {
             // Reversing banned state
@@ -93,6 +98,15 @@ public class DatabaseTest
 
             // Print out the user
             System.out.println("After banned state change: " + user);
+        }
+
+        // Wait 5 seconds before deletion
+        {
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         // Delete our user object

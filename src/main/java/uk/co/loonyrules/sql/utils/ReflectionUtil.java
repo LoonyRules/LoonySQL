@@ -28,11 +28,18 @@ public class ReflectionUtil
         public Map<String, Field> load(Class<?> clazz)
         {
             Map<String, Field> map = new CaseInsensitiveMap<>();
+            
+            // Starting at the Class type given
+            Class<?> targetClass = clazz;
 
-            // TODO: Iterate through all super classes and putAll
+            // Looping through all Parent Classes and adding to map
+            while (targetClass != null) {
+                // Find fields and add to the map
+                map.putAll(ReflectionUtil.findFields(targetClass));
 
-            map.putAll(ReflectionUtil.findFields(clazz));
-            map.putAll(ReflectionUtil.findFields(clazz.getSuperclass()));
+                // Getting the next super class of the current class
+                targetClass = targetClass.getSuperclass();
+            }
 
             return map;
         }
