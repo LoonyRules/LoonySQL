@@ -18,19 +18,16 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
    * Custom column name
    * Default name to the Field name
  * **@Primary**
-   * (Non) AutoIncrement support
+   * Non-AI support (AI support coming soon!)
  * **Tables**
    * Creation
  * **Queries**
-   * SELECT (find, findFirst)
+   * SELECT (find, findFirst, reload)
    * DELETE (delete all rows, delete a specified row)
+   * INSERT [...] ON DUPLICATE KEY [...] (save)
  * **Other**
-   * Reload an object
-   * Delete a row
    * Delete all table contents
 
 ### TODO
  * Table alterations, deleting
- * Full Primary key support
- * Insert, Update, INSERT [...] ON DUPLICATE KEY [...]
- * Save an object
+ * AutoIncrement @Primary support

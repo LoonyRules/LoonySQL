@@ -3,6 +3,7 @@ package uk.co.loonyrules.sql.codecs;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import uk.co.loonyrules.sql.codecs.types.*;
+import uk.co.loonyrules.sql.utils.ReflectionUtil;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,7 +38,10 @@ public abstract class Codec<T>
     public static <T> T getCodec(Class<?> clazz)
     {
         // Return null if not found or cast and return
-        return (T) codecs.values().stream().filter(codec -> codec.isManaging(clazz)).findFirst().orElse(null);
+        return (T) codecs.values().stream()
+                .filter(codec -> codec.isManaging(clazz))
+                .findFirst()
+                .orElse(null);
     }
 
     /**
@@ -163,5 +167,15 @@ public abstract class Codec<T>
      * @throws SQLException If a MySQL error occurred
      */
     public abstract void encode(PreparedStatement statement, int index, T data) throws SQLException;
+
+    @Override
+    public String toString()
+    {
+        return "Codec{" +
+                "types=" + types +
+                ", sqlType='" + sqlType + '\'' +
+                ", maxLength=" + maxLength +
+                '}';
+    }
 
 }

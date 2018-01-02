@@ -1,7 +1,10 @@
 package uk.co.loonyrules.sql;
 
+import uk.co.loonyrules.sql.utils.ReflectionUtil;
 
+import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -11,6 +14,69 @@ import java.util.stream.Collectors;
  */
 public class Query
 {
+
+    /**
+     * Generate a Query based upon an Object
+     * @param object to generate a Query from
+     * @return the generated Query
+     */
+    public static Query from(Object object)
+    {
+        // Query to return
+        Query query = new Query();
+
+        // Get all Field's for this Object's Class
+        for(Field field : ReflectionUtil.getFields(object.getClass()).values())
+        {
+            // Get the Column name
+            String columnName = ReflectionUtil.getColumnName(field);
+
+            // TODO: Implement AutoIncrement support
+            // Skipping if Primary not wanted, or @Primary is autoIncremented
+            //Primary primary = field.getAnnotation(Primary.class);
+
+            // We don't want a Primary field
+            //if(primary != null && primary.autoIncrement())
+            //    continue;
+
+            // Add to the where conditions
+            query.where(columnName, ReflectionUtil.getFieldValue(field, object));
+        }
+
+        // Returning our Query
+        return query;
+    }
+
+    /**
+     * Generate a Query based upon an @Primary annotation for an Object
+     * @param object to generate the Query for
+     * @return the generated Query
+     */
+    public static Query generatePrimary(Object object)
+    {
+        // Get the Primary Field
+        Optional<Field> primaryOptional = ReflectionUtil.getPrimaryField(object.getClass());
+
+        // No Primary field so throw unsupported operation
+        if(!primaryOptional.isPresent())
+            throw new UnsupportedOperationException("No @Primary Field found in " + object.getClass() + ".");
+
+        // Get our Field
+        Field field = primaryOptional.get();
+
+        // Getting the value of the Field
+        Object fieldValue = null;
+        try {
+            fieldValue = field.get(object);
+        } catch (IllegalAccessException e) {
+            fieldValue = null;
+        }
+
+        // We have a Primary key so generate a Query and return
+        return new Query().where(ReflectionUtil.getColumnName(field), fieldValue);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private final LinkedHashMap<String, Object> wheres = new LinkedHashMap<>();
 
@@ -25,6 +91,28 @@ public class Query
     public LinkedHashMap<String, Object> getWheres()
     {
         return wheres;
+    }
+
+    /**
+     * Get all "WHERE" conditions as a (`column1`, column2`) string
+     * @return all "WHERE" conditions as a column string
+     */
+    public String getWheresAsColumns()
+    {
+        return wheres.isEmpty() ? "" : wheres.entrySet().stream()
+                .map(entry -> "`" + entry.getKey() + "`")
+                .collect(Collectors.joining(", "));
+    }
+
+    /**
+     * Get all "WHERE" conditions as a ? placeholder string
+     * @return all "WHERE" conditions as a ? placeholder string
+     */
+    public String getWheresAsPlaceholders()
+    {
+        return wheres.isEmpty() ? "" : wheres.entrySet().stream()
+                .map(entry -> "?")
+                .collect(Collectors.joining(", "));
     }
 
     /**
@@ -97,6 +185,17 @@ public class Query
         return wheres.isEmpty() ? "" : "WHERE " + wheres.entrySet().stream()
                 .map(entry -> entry.getKey() + "=?")
                 .collect(Collectors.joining(" AND "));
+    }
+
+    /**
+     *
+     * @return
+     */
+    public String buildConditionPlaceholders()
+    {
+        return wheres.isEmpty() ? "" : wheres.entrySet().stream()
+                .map(entry -> entry.getKey() + "=?")
+                .collect(Collectors.joining(", "));
     }
 
     /**

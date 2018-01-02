@@ -10,6 +10,7 @@ import uk.co.loonyrules.sql.annotations.Table;
 import uk.co.loonyrules.sql.storage.CaseInsensitiveMap;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -148,9 +149,44 @@ public class ReflectionUtil
         return getColumnAnnotation(field).map(column -> column.name().isEmpty() ? field.getName() : column.name()).orElse(null);
     }
 
+    /**
+     * Wrap the Field that has the @Primary annotation from a Class
+     * @param clazz to get @Primary Field from
+     * @return the primary field wrapped in an Optional
+     */
     public static Optional<Field> getPrimaryField(Class<?> clazz)
     {
         return getFields(clazz).values().stream().filter(field -> field.isAnnotationPresent(Primary.class)).findFirst();
+    }
+
+    /**
+     * Get a safe value for a Field
+     * @param field to get the value from
+     * @param object instance to get instance from
+     * @return the Field's value
+     */
+    public static Object getFieldValue(Field field, Object object)
+    {
+        try {
+            return field.get(object);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Convert an Object to an Enum via a class type
+     * @param type to cast the object to
+     * @param object the enum toString value
+     */
+    public static <T> T toEnum(Class<T> type, Object object)
+    {
+        try {
+            return (T) type.getMethod("valueOf", String.class).invoke(null, object);
+        } catch(NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            return null;
+        }
     }
 
 }

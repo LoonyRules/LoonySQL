@@ -10,7 +10,7 @@ import uk.co.loonyrules.sql.annotations.Table;
 import uk.co.loonyrules.sql.codecs.Codec;
 import uk.co.loonyrules.sql.enums.ModifyType;
 import uk.co.loonyrules.sql.models.Tables;
-import uk.co.loonyrules.sql.utils.MapUtil;
+import uk.co.loonyrules.sql.utils.StorageUtil;
 import uk.co.loonyrules.sql.utils.ReflectionUtil;
 
 import java.lang.reflect.Field;
@@ -137,9 +137,14 @@ public class Database
         // Shutting down the pool
         executorService.shutdown();
 
+        // If shutdownThread is active
+        if(shutdownThread == null || !shutdownThread.isAlive())
+            return;
+
         try {
             // Removing our ShutdownHook
             Runtime.getRuntime().removeShutdownHook(shutdownThread);
+            shutdownThread = null;
         } catch(IllegalStateException e) {
 
         }
@@ -190,7 +195,7 @@ public class Database
      */
     public <T> List<T> find(Object object)
     {
-        return find((Class<T>) object.getClass(), generatePrimaryQuery(object));
+        return find((Class<T>) object.getClass(), Query.generatePrimary(object));
     }
 
 
@@ -276,7 +281,7 @@ public class Database
     public long delete(Object object)
     {
         // Delete via an auto-generated Query using a @Primary Field
-        return delete(object.getClass(), generatePrimaryQuery(object));
+        return delete(object.getClass(), Query.generatePrimary(object));
     }
 
     /**
@@ -400,20 +405,23 @@ public class Database
             return false;
 
         // TODO: Manage column addition/removal
-
-        // Return modified boolean
-        return modified;
+        throw new UnsupportedOperationException("ModifyType \"" + table.modifyType().toString() + "\" isn't currently supported.");
     }
 
     /**
-     * Reload a @Table object to get new data
+     * Reload an @Table object to get new data
      * @param object the object to reload data for
      */
     public void reload(Object object)
     {
-        reload(object, generatePrimaryQuery(object));
+        reload(object, Query.generatePrimary(object));
     }
 
+    /**
+     * Reload an @Table object to get new data
+     * @param object to reload data for
+     * @param query query to execute to get the row data
+     */
     public void reload(Object object, Query query)
     {
         // Get the Table annotation wrapped in an Optional
@@ -471,19 +479,14 @@ public class Database
         // Get the Table annotation
         Table table = tableOptional.get();
 
-        /*
-
-        // Get the Primary field
+        // Get the Primary Field and the true name of the Primary Column
         Optional<Field> primaryOptional = ReflectionUtil.getPrimaryField(object.getClass());
         String primaryName = primaryOptional.isPresent() ? ReflectionUtil.getColumnName(primaryOptional.get()) : null;
 
-        // Building Query's based on INSERT AND UPDATE Field data
-        Query
-                insertQuery = buildQuery(object, true),
-                updateQuery = buildQuery(object, false);
+        // Generating our Query objects
+        Query query = Query.from(object);
 
-        // INSERT [...] ON DUPLICATE KEY [...]
-
+        // Our SQL objects used
         Connection connection = null;
         PreparedStatement preparedStatement = null;
 
@@ -491,55 +494,71 @@ public class Database
             // Get a new Connection
             connection = getConnection();
 
-            // Getting our thing
-            LinkedList<Object> objects = new LinkedList<>();
-
-            // For the VALUES replacement
-            objects.addAll(updateQuery.getWheres().values());
-
-            // For the DUPLICATE KEY UPDATE replacement
-            objects.addAll(updateQuery.updateWheres(null));
-
-            // Prepare our PreparedStatement
-            preparedStatement = prepare(
-                    connection,
-                    String.format(
-                            "INSERT INTO `%s` (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s",
-                            /* Table nane */
-                            /*table.name(),
-                            /* Column names */
-                            /*updateQuery.buildKeys(),
-                            /* Value placeholder for each column (Eg: ?, ?, ?) */
-                            /*updateQuery.buildValuesReplaceable(),
-                            /* Build condition string */
-                            /*updateQuery.buildUpdate(null)
-                    ),
-                    objects.toArray()
+            // Prepare our query string
+            String queryString = String.format(
+                    /* Our query string with formatting */
+                    "INSERT INTO `%s` (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s",
+                    /* Table name */
+                    table.name(),
+                    /* Get the column names */
+                    query.getWheresAsColumns(),
+                    /* Combining stuff */
+                    query.getWheresAsPlaceholders(),
+                    /* Get our placeholders for our UPDATE formatting */
+                    query.buildConditionPlaceholders()
             );
 
-            // Execute query
-            preparedStatement.executeLargeUpdate();
+            // Prepare our query
+            preparedStatement = prepare(
+                    connection,
+                    queryString,
+                    StorageUtil.combine(
+                            query.getWheres().values().toArray(),
+                            query.getWheres().values().toArray()
+                    )
+            );
+
+            // Execute the statement
+            preparedStatement.execute();
+
+            // If Primary is known,
         } catch(SQLException e) {
             e.printStackTrace();
         } finally {
+            // Close the resources we've used.
             closeResources(connection, preparedStatement);
-        }*/
+        }
     }
 
+    /**
+     * Close MySQL resources used
+     * @param connection used in a query
+     */
     public void closeResources(Connection connection)
     {
         closeResources(connection, null);
     }
 
+    /**
+     * Close MySQL resources used
+     * @param connection used in a query
+     * @param preparedStatement used in a query
+     */
     public void closeResources(Connection connection, PreparedStatement preparedStatement)
     {
         closeResources(connection, preparedStatement, null);
     }
 
+    /**
+     * Close MySQL resources used
+     * @param connection used in a query
+     * @param preparedStatement used in a query
+     * @param resultSet used in a query
+     */
     public void closeResources(Connection connection, PreparedStatement preparedStatement, ResultSet resultSet)
     {
         try {
-            // Closinzg our Connection
+            // Closing our Connection
             if(connection != null && !connection.isClosed())
                 connection.close();
 
@@ -557,35 +576,11 @@ public class Database
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private Query generatePrimaryQuery(Object object)
-    {
-        // Get the Primary Field
-        Optional<Field> primaryOptional = ReflectionUtil.getPrimaryField(object.getClass());
-
-        // No Primary field so throw unsupported operation
-        if(!primaryOptional.isPresent())
-            throw new UnsupportedOperationException("No @Primary Field found in " + object.getClass() + ".");
-
-        // Get our Field
-        Field field = primaryOptional.get();
-
-        // Getting the value of the Field
-        Object fieldValue = null;
-        try {
-            fieldValue = field.get(object);
-        } catch (IllegalAccessException e) {
-            fieldValue = null;
-        }
-
-        // We have a Primary key so generate a Query and return
-        return new Query().where(ReflectionUtil.getColumnName(field), fieldValue);
-    }
-
     /**
      * Generate a PreparedStatement with specified data
      * @return the generated PreparedStatement
      */
-    private PreparedStatement prepare(Connection connection, String statement, Object... data) throws SQLException
+    private PreparedStatement prepare(Connection connection, String statement, Object[] data) throws SQLException
     {
         System.out.println("prepare (statement=" + statement + " :: data=" + data + ", size=" + data.length + ")");
 
@@ -624,7 +619,8 @@ public class Database
      * @return the generated PreparedStatement
      * @throws SQLException if an error occurs
      */
-    private PreparedStatement prepareCreate(Connection connection, Class<?> clazz) throws SQLException {
+    private PreparedStatement prepareCreate(Connection connection, Class<?> clazz) throws SQLException
+    {
         // Get the Table annotation
         Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
 
@@ -723,7 +719,7 @@ public class Database
             return;
 
         // Iterate through ResultSet data as a Map
-        for(Map.Entry<String, Object> entry : MapUtil.toMap(resultSet).entrySet())
+        for(Map.Entry<String, Object> entry : StorageUtil.toMap(resultSet).entrySet())
         {
             // Name of the Column
             String column = entry.getKey();
@@ -747,7 +743,7 @@ public class Database
 
             // Assigning the field's value with the decoded data
             try {
-                field.set(object, codec.decode(resultSet, object.getClass(), column));
+                field.set(object, codec.decode(resultSet, field.getType(), column));
             } catch (IllegalAccessException | SQLException e) {
                 // TODO: LoggerFactory
                 System.out.println("Error occurred when decoding " + field);

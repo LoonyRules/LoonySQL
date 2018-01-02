@@ -1,6 +1,7 @@
 package uk.co.loonyrules.sql;
 
 import org.junit.Test;
+import uk.co.loonyrules.sql.codecs.RankCodec;
 import uk.co.loonyrules.sql.models.Tables;
 import uk.co.loonyrules.sql.models.User;
 
@@ -19,7 +20,7 @@ public class DatabaseTest
     private final UUID uuid = UUID.fromString("2179a7da-81e4-443b-a459-1b4157e07709");
 
     private Database database;
-    private User user;
+    private User user = new User(uuid, "LoonyRules");
 
     @Test
     public void connect()
@@ -35,8 +36,18 @@ public class DatabaseTest
             // Attempt to connect
             database.connect();
 
+            // Registering our Codecs
+            new RankCodec();
+
             // Update the Table associated with User object
             database.updateTable(User.class);
+        }
+
+        // Inserting our User
+        {
+            database.save(user);
+
+            System.out.println("Inserted our dummy user " + user);
         }
 
         // Select all and skip/limit example
@@ -77,7 +88,7 @@ public class DatabaseTest
             // Reversing banned state
             user.setBanned(!user.isBanned());
 
-            // Save
+            // Updating our changed data
             database.save(user);
 
             // Print out the user
@@ -93,14 +104,6 @@ public class DatabaseTest
 
             // Should be 0
             System.out.println("Find result post deletion: " + (database.find(user).size()));
-        }
-
-        // Insert example
-        {
-            //
-            database.save(user);
-
-            System.out.println("User has been inserted into the table");
         }
     }
 

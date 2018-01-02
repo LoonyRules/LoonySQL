@@ -3,16 +3,18 @@ package uk.co.loonyrules.sql.models;
 import uk.co.loonyrules.sql.annotations.Column;
 import uk.co.loonyrules.sql.annotations.Primary;
 import uk.co.loonyrules.sql.annotations.Table;
+import uk.co.loonyrules.sql.enums.ModifyType;
+import uk.co.loonyrules.sql.enums.Rank;
 
 import java.util.UUID;
 
-@Table(name = "users")
+@Table(name = "users", modifyType = ModifyType.NONE)
 public class User
 {
 
     @Column
     @Primary
-    private int id;
+    private int id = 0;
 
     @Column
     private UUID uuid;
@@ -23,8 +25,11 @@ public class User
     @Column
     private int random;
 
-    @Column(maxLength = 1)
+    @Column
     private boolean banned;
+
+    @Column
+    private Rank rank = Rank.DEFAULT;
 
     public User()
     {
@@ -34,6 +39,12 @@ public class User
     public User(UUID uuid)
     {
         this.uuid = uuid;
+    }
+
+    public User(UUID uuid, String lastName)
+    {
+        this.uuid = uuid;
+        this.lastName = lastName;
     }
 
     public int getId()
@@ -61,6 +72,11 @@ public class User
         return banned;
     }
 
+    public Rank getRank()
+    {
+        return rank;
+    }
+
     public void setLastName(String lastName)
     {
         this.lastName = lastName;
@@ -76,14 +92,22 @@ public class User
         this.banned = banned;
     }
 
+    public void setRank(Rank rank)
+    {
+        this.rank = rank;
+    }
+
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "User{" +
                 "id=" + id +
                 ", uuid=" + uuid +
                 ", lastName='" + lastName + '\'' +
                 ", random=" + random +
                 ", banned=" + banned +
+                ", rank=" + rank.toString() +
                 '}';
     }
+
 }
