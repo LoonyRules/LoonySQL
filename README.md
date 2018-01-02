@@ -10,7 +10,8 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
    * DoubleCodec (`double.class`)
    * FloatCodec (`float.class`)
    * UUIDCodec (`UUID.class`)
- * **@Table**
+   * EnumCodec (`Enum.class`) See [RankCodec](https://github.com/LoonyRules/LoonySQL/blob/master/src/test/java/uk/co/loonyrules/sql/codecs/RankCodec.java) for usage example.
+ * **@Table**  
    * Name
    * Create if not exists
    * Altering settings (None, Add, Remove, Add and Remove)

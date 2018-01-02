@@ -28,7 +28,7 @@ public class ReflectionUtil
         public Map<String, Field> load(Class<?> clazz)
         {
             Map<String, Field> map = new CaseInsensitiveMap<>();
-            
+
             // Starting at the Class type given
             Class<?> targetClass = clazz;
 
