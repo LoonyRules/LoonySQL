@@ -127,4 +127,11 @@
             </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>loonyrules-repo</id>
+            <url>http://repo.loonyrules.co.uk/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>
