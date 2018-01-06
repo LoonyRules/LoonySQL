@@ -21,6 +21,9 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
 </dependencies>
 ```
 
+### Download (Don't use maven? You can just download the jar!)
+[LoonyRules Repo](http://repo.loonyrules.co.uk/#browse/browse/components:maven-snapshots:36e3dec8de528c9bc8909eef639baa85)
+
 ### Features
  * **Codecs**
    * StringCodec (`String.class`)
