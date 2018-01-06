@@ -1,6 +1,26 @@
 # LoonySQL
 I got bored once, made a quick, but bad SQL library. I disliked it and now I'm making this rewrite.
 
+### Maven
+```
+<repositories>
+    <repository>
+        <id>loonyrules-repo</id>
+        <url>http://repo.loonyrules.co.uk/repository/maven-snapshots/</url>
+    </repository>
+</repositories>
+
+<dependencies>
+    <dependency>
+        <groupId>uk.co.loonyrules</groupId>
+        <artifactId>sql</artifactId>
+        <version>1.1-SNAPSHOT</version>
+
+        <scope>compile</scope>
+    </dependency>
+</dependencies>
+```
+
 ### Features
  * **Codecs**
    * StringCodec (`String.class`)
