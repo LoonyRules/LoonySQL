@@ -272,7 +272,8 @@ public class TableInfo
      * @return object as a String
      */
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "TableInfo{" +
                 "tableCatalog='" + tableCatalog + '\'' +
                 ", tableSchema='" + tableSchema + '\'' +

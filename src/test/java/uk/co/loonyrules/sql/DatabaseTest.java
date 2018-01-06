@@ -42,7 +42,7 @@ public class DatabaseTest
             // Update the Table associated with User object
             database.updateTable(User.class);
         }
-
+        
         // Inserting our User
         {
             database.save(user);

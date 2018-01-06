@@ -48,4 +48,10 @@ public class EnumCodec<T> extends Codec<T>
         statement.setString(index, data.toString());
     }
 
+    @Override
+    public String toString()
+    {
+        return "EnumCodec{}";
+    }
+
 }

@@ -13,7 +13,7 @@ public class LongCodec extends Codec<Long>
 {
 
     /**
-     * Construct and register this IntegerCodec
+     * Construct and register this LongCodec
      */
     public LongCodec()
     {
@@ -45,6 +45,12 @@ public class LongCodec extends Codec<Long>
     public void encode(PreparedStatement statement, int index, Long data) throws SQLException
     {
         statement.setLong(index, data);
+    }
+
+    @Override
+    public String toString()
+    {
+        return "LongCodec{}";
     }
 
 }

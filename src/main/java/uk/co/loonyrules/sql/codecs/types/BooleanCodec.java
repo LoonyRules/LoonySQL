@@ -47,4 +47,10 @@ public class BooleanCodec extends Codec<Boolean>
         statement.setBoolean(index, data);
     }
 
+    @Override
+    public String toString()
+    {
+        return "BooleanCodec{}";
+    }
+
 }

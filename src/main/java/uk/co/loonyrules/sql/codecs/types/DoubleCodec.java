@@ -47,4 +47,10 @@ public class DoubleCodec extends Codec<Double>
         statement.setDouble(index, data);
     }
 
+    @Override
+    public String toString()
+    {
+        return "DoubleCodec{}";
+    }
+
 }

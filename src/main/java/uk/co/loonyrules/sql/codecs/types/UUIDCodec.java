@@ -51,4 +51,10 @@ public class UUIDCodec extends Codec<UUID>
         statement.setString(index, data.toString());
     }
 
+    @Override
+    public String toString()
+    {
+        return "UUIDCodec{}";
+    }
+
 }

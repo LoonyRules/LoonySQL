@@ -198,6 +198,11 @@ public class ReflectionUtil
         }
     }
 
+    /**
+     * Get all @Column names from a Class
+     * @param clazz to get column names from
+     * @return all converted, true @Column names
+     */
     public static List<String> getColumnNames(Class<?> clazz)
     {
         List<String> columnNames = Lists.newArrayList();

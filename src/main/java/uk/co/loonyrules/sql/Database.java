@@ -2,10 +2,8 @@ package uk.co.loonyrules.sql;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import javafx.util.Pair;
 import uk.co.loonyrules.sql.annotations.Column;
 import uk.co.loonyrules.sql.annotations.Primary;
 import uk.co.loonyrules.sql.annotations.Table;
@@ -20,8 +18,10 @@ import uk.co.loonyrules.sql.utils.ReflectionUtil;
 import java.lang.reflect.Field;
 import java.sql.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -89,6 +89,15 @@ public class Database
     public boolean isConnected()
     {
         return hikariDataSource != null && !hikariDataSource.isClosed();
+    }
+
+    /**
+     * Run something on the ExecutorService created for asynchronous executions
+     * @param consumer to accept on async thread
+     */
+    public void runAsync(Consumer<Database> consumer)
+    {
+        executorService.execute(() -> consumer.accept(this));
     }
 
     /**
@@ -202,7 +211,6 @@ public class Database
     {
         return find((Class<T>) object.getClass(), Query.generatePrimary(object));
     }
-
 
     /**
      * Find all rows and get back a list of the object provided
@@ -335,6 +343,11 @@ public class Database
         return deletedCount;
     }
 
+    /**
+     * Describe (aka EXPLAIN) an @Table coming from a Class
+     * @param clazz to get Descibe/Explain data for
+     * @return retrieved TableSchema
+     */
     public TableSchema describe(Class<?> clazz)
     {
         // Get the Table annotation
@@ -386,7 +399,6 @@ public class Database
         // Returning our TableSchema
         return new TableSchema(credentials.getDatabase(), table.name(), columns);
     }
-
 
     /**
      * Verify a {@link uk.co.loonyrules.sql.annotations.Table}'s data on the MySQL server.

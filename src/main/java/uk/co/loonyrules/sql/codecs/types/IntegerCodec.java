@@ -47,4 +47,10 @@ public class IntegerCodec extends Codec<Integer>
         statement.setInt(index, data);
     }
 
+    @Override
+    public String toString()
+    {
+        return "IntegerCodec{}";
+    }
+
 }

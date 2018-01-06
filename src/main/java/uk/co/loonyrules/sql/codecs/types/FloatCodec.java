@@ -47,4 +47,10 @@ public class FloatCodec extends Codec<Float>
         statement.setFloat(index, data);
     }
 
+    @Override
+    public String toString()
+    {
+        return "FloatCodec{}";
+    }
+
 }

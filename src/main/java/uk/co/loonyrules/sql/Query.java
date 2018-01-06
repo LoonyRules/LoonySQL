@@ -198,6 +198,37 @@ public class Query
                 .collect(Collectors.joining(", "));
     }
 
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o)
+            return true;
+
+        if (o == null || getClass() != o.getClass())
+            return false;
+
+        Query query = (Query) o;
+
+        if (skip != query.skip)
+            return false;
+
+        if (limit != query.limit)
+            return false;
+
+        if (!wheres.equals(query.wheres))
+            return false;
+
+        return true;
+    }
+    @Override
+    public int hashCode()
+    {
+        int result = wheres.hashCode();
+        result = 31 * result + skip;
+        result = 31 * result + limit;
+        return result;
+    }
+
     /**
      * Generate the query data and append the "WHERE" conditions along with the skip and limit data
      * @return condition statement appended with skip and limit
@@ -208,6 +239,7 @@ public class Query
         StringBuilder stringBuilder = new StringBuilder(buildWhere());
 
         // Managing skip/limit
+
         if(skip != 0 || limit != 0)
         {
             stringBuilder.append(" LIMIT ");

@@ -47,4 +47,10 @@ public class StringCodec extends Codec<String>
         statement.setString(index, data);
     }
 
+    @Override
+    public String toString()
+    {
+        return "StringCodec{}";
+    }
+
 }

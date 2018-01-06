@@ -178,5 +178,4 @@ public abstract class Codec<T>
                 ", maxLength=" + maxLength +
                 '}';
     }
-
 }
