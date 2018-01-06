@@ -3,6 +3,7 @@ package uk.co.loonyrules.sql.utils;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import uk.co.loonyrules.sql.annotations.Column;
 import uk.co.loonyrules.sql.annotations.Primary;
@@ -11,6 +12,7 @@ import uk.co.loonyrules.sql.storage.CaseInsensitiveMap;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -194,6 +196,17 @@ public class ReflectionUtil
         } catch(NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
             return null;
         }
+    }
+
+    public static List<String> getColumnNames(Class<?> clazz)
+    {
+        List<String> columnNames = Lists.newArrayList();
+
+        // Iterate through all Fields to get their @Column name
+        for(Field field : getFields(clazz).values())
+            columnNames.add(getColumnName(field));
+
+        return columnNames;
     }
 
 }

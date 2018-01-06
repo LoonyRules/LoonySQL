@@ -2,7 +2,7 @@ package uk.co.loonyrules.sql;
 
 import org.junit.Test;
 import uk.co.loonyrules.sql.codecs.RankCodec;
-import uk.co.loonyrules.sql.models.Tables;
+import uk.co.loonyrules.sql.models.TableInfo;
 import uk.co.loonyrules.sql.models.User;
 
 import java.sql.Connection;
@@ -57,7 +57,7 @@ public class DatabaseTest
 
             // Selecting `information_schema.TABLES` rows but skipping/limiting random amounts
             int skip = random.nextInt(5);
-            select("Select information_schema.TABLES with skipping and limiting.", Tables.class, new Query().skip(skip).limit(random.nextInt(skip + 5)));
+            select("Select information_schema.TABLES with skipping and limiting.", TableInfo.class, new Query().skip(skip).limit(random.nextInt(skip + 5)));
         }
 
         // Example of how to get a User object with a "WHERE" condition

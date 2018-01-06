@@ -4,10 +4,10 @@ import uk.co.loonyrules.sql.annotations.Column;
 import uk.co.loonyrules.sql.annotations.Table;
 
 /**
- * InformationSchema Table model
+ * InformationSchema TableInfo model
  */
 @Table(name = "information_schema.TABLES")
-public class Tables
+public class TableInfo
 {
 
     @Column(name = "TABLE_CATALOG")
@@ -73,7 +73,7 @@ public class Tables
     @Column(name = "TABLE_COMMENT")
     private String tableComment;
 
-    public Tables()
+    public TableInfo()
     {
 
     }
@@ -268,12 +268,12 @@ public class Tables
     }
 
     /**
-     * Tables object as a String
+     * TableInfo object as a String
      * @return object as a String
      */
     @Override
     public String toString() {
-        return "Tables{" +
+        return "TableInfo{" +
                 "tableCatalog='" + tableCatalog + '\'' +
                 ", tableSchema='" + tableSchema + '\'' +
                 ", tableName='" + tableName + '\'' +
