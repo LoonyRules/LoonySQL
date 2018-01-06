@@ -24,12 +24,12 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
 ### Features
  * **Codecs**
    * StringCodec (`String.class`)
-   * IntCodec (`int.class`)
-   * IntegerCodec (`Integer.class`)
-   * BooleanCodec (`boolean.class`)
-   * DoubleCodec (`double.class`)
-   * FloatCodec (`float.class`)
+   * IntegerCodec (`int.class`, `Integer.class`)
+   * BooleanCodec (`boolean.class`, `Boolean.class`)
+   * DoubleCodec (`double.class`. `Double.class`)
+   * FloatCodec (`float.class`, `Float.class`)
    * UUIDCodec (`UUID.class`)
+   * LongCodec (`long.class`, `Long.class`)
    * EnumCodec (`Enum.class`) See [RankCodec](https://github.com/LoonyRules/LoonySQL/blob/master/src/test/java/uk/co/loonyrules/sql/codecs/RankCodec.java) for usage example.
  * **@Table**  
    * Name
@@ -50,5 +50,4 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
    * Delete all table contents
 
 ### TODO
- * Table alterations, deleting
- * AutoIncrement @Primary support
+ * AutoIncrement @Primary support (including Table alterations)

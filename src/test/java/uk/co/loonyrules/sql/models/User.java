@@ -3,12 +3,11 @@ package uk.co.loonyrules.sql.models;
 import uk.co.loonyrules.sql.annotations.Column;
 import uk.co.loonyrules.sql.annotations.Primary;
 import uk.co.loonyrules.sql.annotations.Table;
-import uk.co.loonyrules.sql.enums.ModifyType;
 import uk.co.loonyrules.sql.enums.Rank;
 
 import java.util.UUID;
 
-@Table(name = "users", modifyType = ModifyType.NONE)
+@Table(name = "users")
 public class User
 {
 
@@ -16,7 +15,7 @@ public class User
     @Primary(autoIncrement = false)
     private UUID uuid;
 
-    @Column
+    @Column(maxLength = 16)
     private String lastName;
 
     @Column

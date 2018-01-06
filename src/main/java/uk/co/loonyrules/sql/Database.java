@@ -2,14 +2,18 @@ package uk.co.loonyrules.sql;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.util.Pair;
 import uk.co.loonyrules.sql.annotations.Column;
 import uk.co.loonyrules.sql.annotations.Primary;
 import uk.co.loonyrules.sql.annotations.Table;
 import uk.co.loonyrules.sql.codecs.Codec;
 import uk.co.loonyrules.sql.enums.ModifyType;
-import uk.co.loonyrules.sql.models.Tables;
+import uk.co.loonyrules.sql.models.TableColumn;
+import uk.co.loonyrules.sql.models.TableInfo;
+import uk.co.loonyrules.sql.models.TableSchema;
 import uk.co.loonyrules.sql.utils.StorageUtil;
 import uk.co.loonyrules.sql.utils.ReflectionUtil;
 
@@ -18,6 +22,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * The main class that allows you to manage the entire Database
@@ -330,6 +335,59 @@ public class Database
         return deletedCount;
     }
 
+    public TableSchema describe(Class<?> clazz)
+    {
+        // Get the Table annotation
+        Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
+
+        // Not found so throw an error
+        Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + clazz + " when describing Table.");
+
+        // Get the Table annotation
+        Table table = tableOptional.get();
+
+        // MySQL related data
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        // Data to return
+        List<TableColumn> columns = Lists.newArrayList();
+
+        try {
+            // Get a new Connection
+            connection = getConnection();
+
+            // Preparing our statement
+            preparedStatement = connection.prepareStatement("DESCRIBE `" + table.name() + "`");
+
+            // Execute our query
+            resultSet = preparedStatement.executeQuery();
+
+            // While we have results...
+            while (resultSet.next())
+            {
+                // Our new TableColumn instance to populate
+                TableColumn tableColumn = new TableColumn();
+
+                // Populate our Object
+                populate(tableColumn, resultSet);
+
+                // Adding to the List
+                columns.add(tableColumn);
+            }
+        } catch(SQLException e) {
+            e.printStackTrace();
+        } finally {
+            // Close our resources
+            closeResources(connection, preparedStatement, resultSet);
+        }
+
+        // Returning our TableSchema
+        return new TableSchema(credentials.getDatabase(), table.name(), columns);
+    }
+
+
     /**
      * Verify a {@link uk.co.loonyrules.sql.annotations.Table}'s data on the MySQL server.
      * This will create the table if it doesn't exist, or modify the table depending on the {@link uk.co.loonyrules.sql.enums.ModifyType}
@@ -355,17 +413,18 @@ public class Database
             throw new IllegalArgumentException(String.valueOf("Attempted to update @Table for " + clazz + " even though the properties say we can't."));
 
         // Get our InformationSchema from our search
-        List<Tables> results = find(Tables.class, new Query()
+        List<TableInfo> results = find(TableInfo.class, new Query()
                 .where("TABLE_SCHEMA", credentials.getDatabase())
                 .where("TABLE_NAME", ReflectionUtil.getTableName(clazz))
                 .limit(1));
 
+        // MySQL data
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+
         // No results so lets Create the Table
         if(results.isEmpty())
         {
-            Connection connection = null;
-            PreparedStatement preparedStatement = null;
-
             // Get a new Connection
             try {
                 // Get a new Connection
@@ -383,17 +442,8 @@ public class Database
                 // Nothing was modified because an error
                 modified = false;
             } finally {
-                try {
-                    // Closing our Connection
-                    if(connection != null && !connection.isClosed())
-                        connection.close();
-
-                    // Closing our PreparedStatement
-                    if(preparedStatement != null && !preparedStatement.isClosed())
-                        preparedStatement.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                // Closing our resources
+                closeResources(connection, preparedStatement);
             }
 
             // Returning the modified state
@@ -404,8 +454,43 @@ public class Database
         if(table.modifyType() == ModifyType.NONE)
             return false;
 
-        // TODO: Manage column addition/removal
-        throw new UnsupportedOperationException("ModifyType \"" + table.modifyType().toString() + "\" isn't currently supported.");
+        // Get our TableSchema result
+        TableSchema tableSchema = describe(clazz);
+
+        // No data found, so do nothing
+        if(tableSchema.isEmpty())
+            return false;
+
+        // Get Column names
+        List<String> schemaColumnNames = tableSchema.getColumnNames();
+
+        // Get our Column names for our Class
+        List<String> classColumnNames = ReflectionUtil.getColumnNames(clazz);
+
+        // Columns to add
+        List<String> toAdd = (table.modifyType() == ModifyType.ADD || table.modifyType() == ModifyType.ADD_REMOVE ? classColumnNames.stream().filter(name -> !schemaColumnNames.contains(name)).collect(Collectors.toList()) : Lists.newArrayList());
+
+        // Columns to remove
+        List<String> toRemove = (table.modifyType() == ModifyType.REMOVE || table.modifyType() == ModifyType.ADD_REMOVE ? schemaColumnNames.stream().filter(name -> !classColumnNames.contains(name)).collect(Collectors.toList()) : Lists.newArrayList());
+
+        // Query stuff
+        try {
+            // Get a new Connection
+            connection = getConnection();
+
+            // Prepare our alteration query
+            preparedStatement = prepareAlter(connection, clazz, toAdd, toRemove);
+
+            // Execute update
+            modified = preparedStatement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources(connection, preparedStatement);
+        }
+
+        // Return the modified variable
+        return modified;
     }
 
     /**
@@ -582,8 +667,6 @@ public class Database
      */
     private PreparedStatement prepare(Connection connection, String statement, Object[] data) throws SQLException
     {
-        System.out.println("prepare (statement=" + statement + " :: data=" + data + ", size=" + data.length + ")");
-
         // Prepare our PreparedStatement
         PreparedStatement preparedStatement = connection.prepareStatement(statement);
 
@@ -596,8 +679,6 @@ public class Database
             // Get the Codec for this Type
             Codec codec = Codec.getCodec(object.getClass());
 
-            System.out.println(" " + i + " object: " + object + " (" + object.getClass() + ", codec: " + codec + ")");
-
             // Not known so skip
             if(codec == null)
                 continue;
@@ -606,15 +687,13 @@ public class Database
             codec.encode(preparedStatement, i, object);
         }
 
-        System.out.println(" final: " + statement);
-
         // Return our statement
         return preparedStatement;
     }
 
     /**
      * Generate a PreparedStatement for creating a Table
-     * @param connection to create te PreparedStatement from
+     * @param connection to create the PreparedStatement from
      * @param clazz to create the Table from
      * @return the generated PreparedStatement
      * @throws SQLException if an error occurs
@@ -694,14 +773,79 @@ public class Database
             query.setLength(query.length() - 2);
         else query.append("PRIMARY KEY (`").append(ReflectionUtil.getColumnName(primaryField)).append("`)");
 
-        // Build our Query String
-        String queryString = String.format("CREATE TABLE IF NOT EXISTS `%s` (%s) ENGINE=InnoDB DEFAULT CHARSET=utf8", table.name(), query.toString());
-
-        // Print debug
-        System.out.println("prepareCreate (clazz=" + clazz + ", queryString=" + queryString + ")");
-
         // Return our PreparedStatement
-        return connection.prepareStatement(queryString);
+        return connection.prepareStatement(String.format("CREATE TABLE IF NOT EXISTS `%s` (%s) ENGINE=InnoDB DEFAULT CHARSET=utf8", table.name(), query.toString()));
+    }
+
+    /**
+     * Generate a PreparedStatement for altering an @Table
+     * @param connection to create the PreparedStatement from
+     * @param clazz to get the table data for
+     * @param toAdd columns to add
+     * @param toRemove columns to remove
+     * @return generated PreparedStatement
+     */
+    private PreparedStatement prepareAlter(Connection connection, Class<?> clazz, List<String> toAdd, List<String> toRemove) throws SQLException
+    {
+        // Get the Table annotation
+        Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
+
+        // Not found so throw an error
+        Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + clazz + " when preparing Table creation.");
+
+        // Get the Table annotation
+        Table table = tableOptional.get();
+
+        // Where our query string data will be stored
+        StringBuilder query = new StringBuilder();
+
+        // Iterate through all Field'entry
+        for (Map.Entry<String, Field> entry : ReflectionUtil.getFields(clazz).entrySet())
+        {
+            // The Field in question
+            Field field = entry.getValue();
+
+            // The name of the Column in the Table
+            Column column = ReflectionUtil.getColumnAnnotation(field).get();
+            String columnName =  ReflectionUtil.getColumnName(entry.getValue());
+
+            // Doesn't need to be added
+            if(!toAdd.contains(columnName))
+                continue;
+
+            // Get the Codec for this Field
+            Codec codec = Codec.getCodec(field.getType());
+
+            // No Codec known, skip!
+            if(codec == null)
+                continue;
+
+            // Appending onto our Column
+            query
+                    .append("ADD COLUMN `")
+                    .append(columnName)
+                    .append("` ")
+                    .append(codec.getSQLType())
+                    .append("(")
+                    .append(codec.calculateMaxLength(column.maxLength()))
+                    .append("), ");
+        }
+
+        // Appending DROP data to Query
+        for(String removeColumnName : toRemove)
+        {
+            query
+                    .append("DROP ")
+                    .append(removeColumnName)
+                    .append(", ");
+        }
+
+        // Removing trailing comma
+        if(query.length() > 2)
+            query.setLength(query.length() - 2);
+
+        // Return our prepared statement
+        return connection.prepareStatement(String.format("ALTER TABLE `%s` %s", table.name(), query.toString()));
     }
 
     /**

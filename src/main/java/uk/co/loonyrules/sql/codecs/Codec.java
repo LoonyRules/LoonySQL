@@ -63,6 +63,7 @@ public abstract class Codec<T>
         new DoubleCodec();
         new FloatCodec();
         new UUIDCodec();
+        new LongCodec();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,7 +146,7 @@ public abstract class Codec<T>
      */
     public int calculateMaxLength(int input)
     {
-        return maxLength > input ? maxLength : input;
+        return maxLength == 0 ? input : input > maxLength ? maxLength : input;
     }
 
     /**
