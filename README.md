@@ -14,7 +14,7 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
     <dependency>
         <groupId>uk.co.loonyrules</groupId>
         <artifactId>sql</artifactId>
-        <version>1.1-SNAPSHOT</version>
+        <version>1.2-SNAPSHOT</version>
 
         <scope>compile</scope>
     </dependency>
