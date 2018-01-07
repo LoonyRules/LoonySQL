@@ -45,10 +45,12 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
    * Non-AutoIncrement support (AutoIncrement support coming soon!)
  * **Tables**
    * Creation
+   * Modification to structure (Adding/Removing columns)
  * **Queries**
    * SELECT (find, findFirst, reload)
    * DELETE (delete all rows, delete a specified row)
    * INSERT [...] ON DUPLICATE KEY [...] (save)
+   * EXPLAIN / DESCRIBE
  * **Other**
    * Delete all table contents
 
