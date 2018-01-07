@@ -100,7 +100,7 @@ public class DatabaseTest
             System.out.println("After banned state change: " + user);
         }
 
-        // Wait 5 seconds before deletion
+        // Wait 5 seconds before deletion, use this time to view the Table as proof this is all working.
         {
             try {
                 Thread.sleep(5000);
@@ -109,7 +109,7 @@ public class DatabaseTest
             }
         }
 
-        // Delete our user object
+        // Delete our user object so then next time this Test is ran, there's no data.
         {
             // Should be 1
             System.out.println("Find result prior to deletion: " + (database.find(user).size()));
