@@ -12,13 +12,18 @@ import uk.co.loonyrules.sql.enums.ModifyType;
 import uk.co.loonyrules.sql.models.TableColumn;
 import uk.co.loonyrules.sql.models.TableInfo;
 import uk.co.loonyrules.sql.models.TableSchema;
-import uk.co.loonyrules.sql.utils.StorageUtil;
+import uk.co.loonyrules.sql.utils.ParseUtil;
 import uk.co.loonyrules.sql.utils.ReflectionUtil;
+import uk.co.loonyrules.sql.utils.StorageUtil;
 
 import java.lang.reflect.Field;
-import java.sql.*;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -578,7 +583,6 @@ public class Database
 
         // Get the Primary Field and the true name of the Primary Column
         Optional<Field> primaryOptional = ReflectionUtil.getPrimaryField(object.getClass());
-        String primaryName = primaryOptional.isPresent() ? ReflectionUtil.getColumnName(primaryOptional.get()) : null;
 
         // Generating our Query objects
         Query query = Query.from(object);
@@ -617,13 +621,55 @@ public class Database
 
             // Execute the statement
             preparedStatement.execute();
-
-            // If Primary is known,
         } catch(SQLException e) {
             e.printStackTrace();
         } finally {
             // Close the resources we've used.
             closeResources(connection, preparedStatement);
+
+            // Check if the @Primary is autoIncrement type and value = 0
+            if(primaryOptional.isPresent())
+            {
+                // Getting the Primary Field
+                Field field = primaryOptional.get();
+
+                // autoIncrement type so get last data
+                if(field.getAnnotation(Primary.class).autoIncrement())
+                {
+                    // Checking if the field is an int to get the last autoIncremented integer
+                    if(ParseUtil.toInt(ReflectionUtil.getFieldValue(field, object), 0) == 0)
+                    {
+                        ResultSet resultSet = null;
+
+                        try {
+                            // Get a new Connection
+                            connection = getConnection();
+
+                            // Prepare our statement
+                            preparedStatement = connection.prepareStatement("SELECT LAST_INSERT_ID()");
+
+                            // Execution was a success
+                            resultSet = preparedStatement.executeQuery();
+
+                            // There was a result
+                            if(resultSet.next())
+                            {
+                                try {
+                                    // Setting Field's value
+                                    field.set(object, resultSet.getInt(1));
+                                } catch (IllegalAccessException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        } finally {
+                            // Closing connections
+                            closeResources(connection, preparedStatement, resultSet);
+                        }
+                    }
+                }
+            }
         }
     }
 
