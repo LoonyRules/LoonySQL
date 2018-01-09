@@ -96,7 +96,7 @@ public class User
                 ", lastName='" + lastName + '\'' +
                 ", random=" + random +
                 ", banned=" + banned +
-                ", rank=" + rank.toString() +
+                ", rank=" + rank +
                 '}';
     }
 

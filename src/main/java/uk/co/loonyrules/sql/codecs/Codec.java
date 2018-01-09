@@ -3,7 +3,6 @@ package uk.co.loonyrules.sql.codecs;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import uk.co.loonyrules.sql.codecs.types.*;
-import uk.co.loonyrules.sql.utils.ReflectionUtil;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
