@@ -2,6 +2,7 @@ package uk.co.loonyrules.sql;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import uk.co.loonyrules.sql.annotations.Column;
@@ -37,6 +38,7 @@ public class Database
 {
 
     private final Credentials credentials;
+    private final Map<String, String> tablePlaceholders = Maps.newHashMap();
 
     private HikariDataSource hikariDataSource;
     private ExecutorService executorService;
@@ -74,6 +76,51 @@ public class Database
     }
 
     /**
+     * Get @Table name placeholders
+     * @return all registered @Table name placeholders
+     */
+    public Map<String, String> getTablePlaceholders()
+    {
+        return tablePlaceholders;
+    }
+
+    /**
+     * Get the placeholder value for an @Table name
+     * @param placeholder to get the value for
+     * @return the placeholder value wrapped in an Optional
+     */
+    public Optional<String> getTablePlaceholder(String placeholder)
+    {
+        return Optional.ofNullable(tablePlaceholders.get(placeholder));
+    }
+
+    /**
+     * Get an @Table name placeholder
+     * @param placeholder to get the value for
+     * @param defaultValue data to return if not found
+     * @return the name of the placeholder value or the defaultValue if not found
+     */
+    public String getTablePlaceholder(String placeholder, String defaultValue)
+    {
+        return getTablePlaceholder(placeholder).orElse(defaultValue);
+    }
+
+    /**
+     * Replace a string with the placeholder value data if found
+     * @param tableName to search for placeholders
+     * @return the final string
+     */
+    public String replaceTableNamePlaceholders(String tableName)
+    {
+        // Iterating through all @Table name placeholders and replacing strings
+        for(Map.Entry<String, String> entry : getTablePlaceholders().entrySet())
+            tableName = tableName.replace(String.format("{{%s}}", entry.getKey()), entry.getValue());
+
+        // Returning our table name
+        return tableName;
+    }
+
+    /**
      * Get a new {@link Connection} from the {@link HikariDataSource}
      * @return A new {@link Connection} from the {@link HikariDataSource}
      * @throws SQLException if an error is encountered
@@ -94,6 +141,35 @@ public class Database
     public boolean isConnected()
     {
         return hikariDataSource != null && !hikariDataSource.isClosed();
+    }
+
+    /**
+     * Check if a @Table name placeholder is registered
+     * @param placeholder to check for
+     * @return whether or not it's registered
+     */
+    public boolean isTablePlaceholder(String placeholder)
+    {
+        return getTablePlaceholder(placeholder).isPresent();
+    }
+
+    /**
+     * Insert (or overwrite existing) a @Table name placeholder
+     * @param placeholder to replace with the value
+     * @param value to replace the placeholder
+     */
+    public void addTablePlaceholder(String placeholder, String value)
+    {
+        this.tablePlaceholders.put(placeholder, value);
+    }
+
+    /**
+     * Remove an existing @Table name placeholder
+     * @param placeholder to remove
+     */
+    public void removeTablePlaceholder(String placeholder)
+    {
+        this.tablePlaceholders.remove(placeholder);
     }
 
     /**
@@ -249,7 +325,7 @@ public class Database
             connection = getConnection();
 
             // Preparing our statement
-            preparedStatement = prepare(connection, String.format("SELECT * FROM %s %s", table.name(), query.toString()), query.getWheres().values().toArray());
+            preparedStatement = prepare(connection, String.format("SELECT * FROM %s %s", replaceTableNamePlaceholders(table.name()), query.toString()), query.getWheres().values().toArray());
 
             // Execute our PreparedStatement
             resultSet = preparedStatement.executeQuery();
@@ -333,7 +409,7 @@ public class Database
             connection = getConnection();
 
             // Preparing our statement
-            preparedStatement = prepare(connection, String.format("DELETE FROM %s %s", table.name(), query.toString()), query.getWheres().values().toArray());
+            preparedStatement = prepare(connection, String.format("DELETE FROM %s %s", replaceTableNamePlaceholders(table.name()), query.toString()), query.getWheres().values().toArray());
 
             // Execute our PreparedStatement
             deletedCount = preparedStatement.executeLargeUpdate();
@@ -377,7 +453,7 @@ public class Database
             connection = getConnection();
 
             // Preparing our statement
-            preparedStatement = connection.prepareStatement("DESCRIBE `" + table.name() + "`");
+            preparedStatement = connection.prepareStatement("DESCRIBE `" + replaceTableNamePlaceholders(table.name()) + "`");
 
             // Execute our query
             resultSet = preparedStatement.executeQuery();
@@ -402,7 +478,7 @@ public class Database
         }
 
         // Returning our TableSchema
-        return new TableSchema(credentials.getDatabase(), table.name(), columns);
+        return new TableSchema(credentials.getDatabase(), replaceTableNamePlaceholders(table.name()), columns);
     }
 
     /**
@@ -432,7 +508,7 @@ public class Database
         // Get our InformationSchema from our search
         List<TableInfo> results = find(TableInfo.class, new Query()
                 .where("TABLE_SCHEMA", credentials.getDatabase())
-                .where("TABLE_NAME", ReflectionUtil.getTableName(clazz))
+                .where("TABLE_NAME", replaceTableNamePlaceholders((String) ReflectionUtil.getTableName(clazz)))
                 .limit(1));
 
         // MySQL data
@@ -549,7 +625,7 @@ public class Database
             connection = getConnection();
 
             // Preparing our statement
-            preparedStatement = prepare(connection, String.format("SELECT * FROM %s %s", table.name(), query.toString()), query.getWheres().values().toArray());
+            preparedStatement = prepare(connection, String.format("SELECT * FROM %s %s", replaceTableNamePlaceholders(table.name()), query.toString()), query.getWheres().values().toArray());
 
             // Execute our PreparedStatement
             resultSet = preparedStatement.executeQuery();
@@ -600,7 +676,7 @@ public class Database
                     /* Our query string with formatting */
                     "INSERT INTO `%s` (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s",
                     /* Table name */
-                    table.name(),
+                    replaceTableNamePlaceholders(table.name()),
                     /* Get the column names */
                     query.getWheresAsColumns(),
                     /* Combining stuff */
@@ -832,7 +908,7 @@ public class Database
         else query.append("PRIMARY KEY (`").append(ReflectionUtil.getColumnName(primaryField)).append("`)");
 
         // Return our PreparedStatement
-        return connection.prepareStatement(String.format("CREATE TABLE IF NOT EXISTS `%s` (%s) ENGINE=InnoDB DEFAULT CHARSET=utf8", table.name(), query.toString()));
+        return connection.prepareStatement(String.format("CREATE TABLE IF NOT EXISTS `%s` (%s) ENGINE=InnoDB DEFAULT CHARSET=utf8", replaceTableNamePlaceholders(table.name()), query.toString()));
     }
 
     /**
@@ -903,7 +979,7 @@ public class Database
             query.setLength(query.length() - 2);
 
         // Return our prepared statement
-        return connection.prepareStatement(String.format("ALTER TABLE `%s` %s", table.name(), query.toString()));
+        return connection.prepareStatement(String.format("ALTER TABLE `%s` %s", replaceTableNamePlaceholders(table.name()), query.toString()));
     }
 
     /**

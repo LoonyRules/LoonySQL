@@ -7,7 +7,7 @@ import uk.co.loonyrules.sql.enums.Rank;
 
 import java.util.UUID;
 
-@Table(name = "users")
+@Table(name = "{{environment}}_users")
 public class User
 {
 
