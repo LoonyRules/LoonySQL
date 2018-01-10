@@ -14,7 +14,7 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
     <dependency>
         <groupId>uk.co.loonyrules</groupId>
         <artifactId>sql</artifactId>
-        <version>1.4-SNAPSHOT</version>
+        <version>1.5-SNAPSHOT</version>
 
         <scope>compile</scope>
     </dependency>
@@ -22,7 +22,7 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
 ```
 
 ### Download (Don't use maven? You can just download the jar!)
-[LoonyRules Repo](http://repo.loonyrules.co.uk/#browse/browse/components:maven-snapshots:18ddeccdfb491ecb5cd94318f70b1063)
+[LoonyRules Repo](http://repo.loonyrules.co.uk/#browse/browse/components:maven-snapshots:36e3dec8de528c9b08afd2ef8d465ed1)
 
 ### Features
  * **Codecs**
