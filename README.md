@@ -55,4 +55,4 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
    * Delete all table contents
 
 ### TODO
- * AutoIncrement @Primary support (including Table alterations)
+ * Unknown
