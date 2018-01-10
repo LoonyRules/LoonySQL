@@ -33,6 +33,9 @@ public class DatabaseTest
             // Initialising our Database with our Credentials
             database = new Database(credentials);
 
+            // Registering our placeholders
+            database.addTablePlaceholder("environment", "test");
+
             // Attempt to connect
             database.connect();
 
