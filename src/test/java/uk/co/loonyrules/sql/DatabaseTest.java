@@ -1,5 +1,6 @@
 package uk.co.loonyrules.sql;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.loonyrules.sql.codecs.RankCodec;
 import uk.co.loonyrules.sql.models.TableInfo;

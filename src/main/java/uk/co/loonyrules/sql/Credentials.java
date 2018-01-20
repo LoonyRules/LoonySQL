@@ -7,12 +7,14 @@ public class Credentials
 {
 
     private final String
-            host;
-    private final String database;
-    private final String username;
-    private final String password;
+            host,
+            database,
+            username,
+            password;
     private final int port;
     private final long timeout;
+
+    private String driverClass = "com.mysql.jdbc.Driver";
 
     /**
      * Initialise new Credentials with a default timeout of 30,000ms
@@ -92,12 +94,32 @@ public class Credentials
     }
 
     /**
-     * Get the timeout time for a connection request
-     * @return the time in milliseconds before a connection request will time out
+     * Get the timeout time for a request
+     * @return the time in seconds before a request will time out
      */
     public long getTimeout()
     {
         return timeout;
+    }
+
+    /**
+     * Get the driver class name
+     * @return the driver class name
+     */
+    public String getDriverClass()
+    {
+        return driverClass;
+    }
+
+    /**
+     * Set the driver class name
+     * @param driverClass to use for this connection
+     * @return current instance for chaining
+     */
+    public Credentials setDriverClass(String driverClass)
+    {
+        this.driverClass = driverClass;
+        return this;
     }
 
     /**

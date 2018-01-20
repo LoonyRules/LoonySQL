@@ -192,11 +192,15 @@ public class Database
         // Initialise our HikariConfig
         HikariConfig hikariConfig = new HikariConfig();
 
-        // Setting the dataSource's class name
-        hikariConfig.setDataSourceClassName("com.mysql.cj.jdbc.MysqlDataSource");
+        // Setting the driver class name
+        if(credentials.getDriverClass() != null)
+            hikariConfig.setDriverClassName(credentials.getDriverClass());
+
+        // TODO: Make configurable
+        hikariConfig.setMaximumPoolSize(10);
 
         // Setting the Jdbc url
-        hikariConfig.setJdbcUrl(String.format("jdbc:mysql//%s:%s/%s", credentials.getHost(), credentials.getPort(), credentials.getDatabase()));
+        hikariConfig.setJdbcUrl(String.format("jdbc:mysql://%s:%s/%s", credentials.getHost(), credentials.getPort(), credentials.getDatabase()));
 
         // Adding our databaseName as a property
         hikariConfig.addDataSourceProperty("databaseName", credentials.getDatabase());
@@ -205,11 +209,17 @@ public class Database
         hikariConfig.setUsername(credentials.getUsername());
         hikariConfig.setPassword(credentials.getPassword());
 
-        // Setting our timeout
-        hikariConfig.setConnectionTimeout(credentials.getTimeout());
+        hikariConfig.setInitializationFailTimeout(credentials.getTimeout());
 
         // Initialising the Data Source
         hikariDataSource = new HikariDataSource(hikariConfig);
+
+        try {
+            // Setting the Login Timeout
+            hikariDataSource.setLoginTimeout((int) credentials.getTimeout() / 1000);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         // Creating our executor for this Database
         executorService = Executors.newCachedThreadPool();
