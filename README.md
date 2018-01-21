@@ -14,7 +14,7 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
     <dependency>
         <groupId>uk.co.loonyrules</groupId>
         <artifactId>sql</artifactId>
-        <version>1.6-SNAPSHOT</version>
+        <version>1.6.1-SNAPSHOT</version>
 
         <scope>compile</scope>
     </dependency>
@@ -22,7 +22,7 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
 ```
 
 ### Download (Don't use maven? You can just download the jar!)
-[LoonyRules Repo](http://repo.loonyrules.co.uk/#browse/browse/components:maven-snapshots:18ddeccdfb491ecbee85430b3e2be1c5)
+[LoonyRules Repo](http://repo.loonyrules.co.uk/#browse/browse/components:maven-snapshots:18ddeccdfb491ecb84ba4cf15af103fc)
 
 ### Features
  * **Codecs**
@@ -34,6 +34,7 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
    * UUIDCodec (`UUID.class`)
    * LongCodec (`long.class`, `Long.class`)
    * EnumCodec (`Enum.class`) See [RankCodec](https://github.com/LoonyRules/LoonySQL/blob/master/src/test/java/uk/co/loonyrules/sql/codecs/RankCodec.java) for usage example.
+   * ListCodec (`List.class`, `ArrayList.class`) **Currently only supports String as a Generic Type.**
  * **@Table**  
    * Name
    * Create if not exists

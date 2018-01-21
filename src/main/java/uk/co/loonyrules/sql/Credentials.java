@@ -11,8 +11,9 @@ public class Credentials
             database,
             username,
             password;
-    private final int port;
-    private final long timeout;
+    private final int
+            port,
+            timeout;
 
     private String driverClass = "com.mysql.jdbc.Driver";
 
@@ -26,7 +27,7 @@ public class Credentials
      */
     public Credentials(String host, int port, String database, String username, String password)
     {
-        this(host, port, database, username, password, 30000L);
+        this(host, port, database, username, password, 30);
     }
 
     /**
@@ -36,9 +37,9 @@ public class Credentials
      * @param database to connect to
      * @param username to authenticate as
      * @param password to authenticate as
-     * @param timeout time in ms before connection timeout occurs
+     * @param timeout time in seconds before connection timeout occurs
      */
-    public Credentials(String host, int port, String database, String username, String password, long timeout)
+    public Credentials(String host, int port, String database, String username, String password, int timeout)
     {
         this.host = host;
         this.port = port;
@@ -94,10 +95,10 @@ public class Credentials
     }
 
     /**
-     * Get the timeout time for a request
-     * @return the time in seconds before a request will time out
+     * Get the timeout time for the login request
+     * @return the time in seconds before the login request will time out
      */
-    public long getTimeout()
+    public int getTimeout()
     {
         return timeout;
     }

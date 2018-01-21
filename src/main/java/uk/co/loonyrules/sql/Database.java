@@ -209,14 +209,12 @@ public class Database
         hikariConfig.setUsername(credentials.getUsername());
         hikariConfig.setPassword(credentials.getPassword());
 
-        hikariConfig.setInitializationFailTimeout(credentials.getTimeout());
-
         // Initialising the Data Source
         hikariDataSource = new HikariDataSource(hikariConfig);
 
         try {
             // Setting the Login Timeout
-            hikariDataSource.setLoginTimeout((int) credentials.getTimeout() / 1000);
+            hikariDataSource.setLoginTimeout(credentials.getTimeout());
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -643,7 +641,6 @@ public class Database
             // If there's results then populate else throw error
             if (resultSet.next())
                 populate(object, resultSet);
-            else throw new NullPointerException("Couldn't find row matching Query for " + object);
         } catch (SQLException e) {
             // Print the stacktrace
             e.printStackTrace();
@@ -823,7 +820,7 @@ public class Database
             // Get the Codec for this Type
             Codec codec = Codec.getCodec(object.getClass());
 
-            // Not known so skip
+            // Not known so skip (TODO: Throw an exception?)
             if(codec == null)
                 continue;
 
@@ -879,15 +876,27 @@ public class Database
             if(codec == null)
                 continue;
 
-            // Append the data for this Column
+            // Getting the maxLength for our Column
+            int maxLength = codec.calculateMaxLength(column.maxLength());
+
+            // Appending the column data first
             query
                     .append("`")
                     .append(columnName)
                     .append("` ")
-                    .append(codec.getSQLType())
-                    .append("(")
-                    .append(codec.calculateMaxLength(column.maxLength()))
-                    .append("), ");
+                    .append(codec.getSQLType());
+
+            // If the maxLength is allowed to be set...
+            if(maxLength != -1)
+            {
+                query
+                        .append("(")
+                        .append(maxLength)
+                        .append(")");
+            }
+
+            // Appending our comma
+            query.append(", ");
 
             // If it's the Primary
             Primary primary = field.getAnnotation(Primary.class);
@@ -964,15 +973,27 @@ public class Database
             if(codec == null)
                 continue;
 
-            // Appending onto our Column
+            // Getting the maxLength for our Column
+            int maxLength = codec.calculateMaxLength(column.maxLength());
+
+            // Appending the column data first
             query
                     .append("ADD COLUMN `")
                     .append(columnName)
                     .append("` ")
-                    .append(codec.getSQLType())
-                    .append("(")
-                    .append(codec.calculateMaxLength(column.maxLength()))
-                    .append("), ");
+                    .append(codec.getSQLType());
+
+            // If the maxLength is allowed to be set...
+            if(maxLength != -1)
+            {
+                query
+                        .append("(")
+                        .append(maxLength)
+                        .append(")");
+            }
+
+            // Appending our comma
+            query.append(", ");
         }
 
         // Appending DROP data to Query

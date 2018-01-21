@@ -17,7 +17,7 @@ public class DoubleCodec extends Codec<Double>
      */
     public DoubleCodec()
     {
-        super("double", double.class, Double.class);
+        super("double", -1, double.class, Double.class);
     }
 
     /**

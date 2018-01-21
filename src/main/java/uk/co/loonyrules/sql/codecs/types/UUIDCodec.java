@@ -9,6 +9,8 @@ import java.util.UUID;
 
 /**
  * Codec for Encoding/Decoding a UUID
+ *
+ * TODO: Support null UUIDs
  */
 public class UUIDCodec extends Codec<UUID>
 {
@@ -35,7 +37,7 @@ public class UUIDCodec extends Codec<UUID>
         String string = resultSet.getString(fieldName);
 
         // Allows for returning null UUID's
-        return string == null ? null : UUID.fromString(string);
+        return string == null || string.isEmpty() ? null : UUID.fromString(string);
     }
 
     /**
@@ -48,7 +50,7 @@ public class UUIDCodec extends Codec<UUID>
     @Override
     public void encode(PreparedStatement statement, int index, UUID data) throws SQLException
     {
-        statement.setString(index, data.toString());
+        statement.setString(index, data == null ? "" : data.toString());
     }
 
     @Override
