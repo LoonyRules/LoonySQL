@@ -46,7 +46,8 @@ public class ListCodec extends Codec<List<String>>
         String parsedList = resultSet.getString(fieldName);
 
         // Iterating through and add (TODO: Improve this because any comma inside the List's entry will be parsed as a separate entry)
-        list.addAll(Arrays.asList(parsedList.replaceAll("\\[", "").replace("]", "").split(", ")));
+        for(String parseEntry : parsedList.replaceAll("\\[", "").replace("]", "").split(", "))
+            list.add(parseEntry);
 
         // Return our final List
         return list;
