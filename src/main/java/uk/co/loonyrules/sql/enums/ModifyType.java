@@ -24,6 +24,6 @@ public enum ModifyType
     /**
      * Allow addition and removal modifications
      */
-    ADD_REMOVE;
+    ADD_REMOVE
 
 }

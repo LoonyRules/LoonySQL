@@ -40,7 +40,7 @@ public class TableColumn
      */
     public String getField()
     {
-        return field;
+        return this.field;
     }
 
     /**
@@ -49,7 +49,7 @@ public class TableColumn
      */
     public String getType()
     {
-        return type;
+        return this.type;
     }
 
     /**
@@ -58,7 +58,7 @@ public class TableColumn
      */
     public Object getNullObject()
     {
-        return nullObject;
+        return this.nullObject;
     }
 
     /**
@@ -67,7 +67,7 @@ public class TableColumn
      */
     public Object getExtra()
     {
-        return extra;
+        return this.extra;
     }
 
     /**
@@ -76,7 +76,7 @@ public class TableColumn
      */
     public Object getDefaultObject()
     {
-        return defaultObject;
+        return this.defaultObject;
     }
 
     /**
@@ -85,7 +85,7 @@ public class TableColumn
      */
     public Object getKey()
     {
-        return key;
+        return this.key;
     }
 
     /**
@@ -96,12 +96,12 @@ public class TableColumn
     public String toString()
     {
         return "TableColumn{" +
-                "field='" + field + '\'' +
-                ", type='" + type + '\'' +
-                ", nullObject=" + nullObject +
-                ", extra=" + extra +
-                ", defaultObject=" + defaultObject +
-                ", key=" + key +
+                "field='" + this.field + '\'' +
+                ", type='" + this.type + '\'' +
+                ", nullObject=" + this.nullObject +
+                ", extra=" + this.extra +
+                ", defaultObject=" + this.defaultObject +
+                ", key=" + this.key +
                 '}';
     }
 

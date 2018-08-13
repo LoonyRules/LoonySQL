@@ -12,7 +12,10 @@ public class User
 {
 
     @Column
-    @Primary(autoIncrement = false)
+    @Primary
+    private int id;
+
+    @Column(maxLength = 36)
     private UUID uuid;
 
     @Column(maxLength = 16)
@@ -89,10 +92,10 @@ public class User
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "User{" +
-                "uuid=" + uuid +
+                "id=" + id +
+                ", uuid=" + uuid +
                 ", lastName='" + lastName + '\'' +
                 ", random=" + random +
                 ", banned=" + banned +

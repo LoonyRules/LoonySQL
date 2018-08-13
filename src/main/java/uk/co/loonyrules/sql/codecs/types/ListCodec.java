@@ -7,7 +7,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -40,14 +39,21 @@ public class ListCodec extends Codec<List<String>>
     public List<String> decode(ResultSet resultSet, Class<?> type, String fieldName) throws SQLException
     {
         // Creating the list we're returning
-        List<String> list = Lists.newArrayList();
+        final List<String> list = Lists.newArrayList();
 
         // Getting the List encoded data
-        String parsedList = resultSet.getString(fieldName);
+        final String parsedList = resultSet.getString(fieldName);
 
-        // Iterating through and add (TODO: Improve this because any comma inside the List's entry will be parsed as a separate entry)
-        for(String parseEntry : parsedList.replaceAll("\\[", "").replace("]", "").split(", "))
-            list.add(parseEntry);
+        // Parsed list isn't null and isn't empty
+        if(parsedList != null && !parsedList.isEmpty())
+        {
+            // Iterating through all entries to add (TODO: Escape support via quotes and commas. Passing a string that has a comma will BREAK this!)
+            for(String parseEntry : parsedList.replaceAll("\\[", "").replace("]", "").split(", "))
+            {
+                // Add to the list of final String entries
+                list.add(parseEntry);
+            }
+        }
 
         // Return our final List
         return list;
@@ -65,7 +71,7 @@ public class ListCodec extends Codec<List<String>>
     public void encode(PreparedStatement statement, int index, List<String> data) throws SQLException
     {
         // Get the Iterator for our List<String>
-        Iterator<String> iterator = data.iterator();
+        final Iterator<String> iterator = data.iterator();
 
         // No entry so return empty
         if (!iterator.hasNext())
@@ -78,7 +84,7 @@ public class ListCodec extends Codec<List<String>>
         }
 
         // Generating a StringBuilder
-        StringBuilder stringBuilder = new StringBuilder("[");
+        final StringBuilder stringBuilder = new StringBuilder("[");
 
         // Iterating through
         while (iterator.hasNext())

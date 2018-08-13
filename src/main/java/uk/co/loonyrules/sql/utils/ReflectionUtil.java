@@ -24,18 +24,22 @@ import java.util.concurrent.TimeUnit;
 public class ReflectionUtil
 {
 
-    private static LoadingCache<Class<?>, Map<String, Field>> fieldCache = CacheBuilder.newBuilder().expireAfterAccess(5L, TimeUnit.MINUTES).maximumSize(32L).build(new CacheLoader<Class<?>, Map<String, Field>>()
+    private static LoadingCache<Class<?>, Map<String, Field>> fieldCache = CacheBuilder.newBuilder()
+            .expireAfterAccess(5L, TimeUnit.MINUTES)
+            .maximumSize(32L)
+            .build(new CacheLoader<Class<?>, Map<String, Field>>()
     {
         @Override
         public Map<String, Field> load(Class<?> clazz)
         {
-            Map<String, Field> map = new CaseInsensitiveMap<>();
+            final Map<String, Field> map = new CaseInsensitiveMap<>();
 
             // Starting at the Class type given
             Class<?> targetClass = clazz;
 
             // Looping through all Parent Classes and adding to map
-            while (targetClass != null) {
+            while (targetClass != null)
+            {
                 // Find fields and add to the map
                 map.putAll(ReflectionUtil.findFields(targetClass));
 
@@ -87,7 +91,7 @@ public class ReflectionUtil
      */
     public static Map<String, Field> findFields(Class<?> clazz)
     {
-        Map<String, Field> fields = Maps.newHashMap();
+        final Map<String, Field> fields = Maps.newHashMap();
 
         if(clazz == null)
             return fields;
@@ -205,7 +209,7 @@ public class ReflectionUtil
      */
     public static List<String> getColumnNames(Class<?> clazz)
     {
-        List<String> columnNames = Lists.newArrayList();
+        final List<String> columnNames = Lists.newArrayList();
 
         // Iterate through all Fields to get their @Column name
         for(Field field : getFields(clazz).values())

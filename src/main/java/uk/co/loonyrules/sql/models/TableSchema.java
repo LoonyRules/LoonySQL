@@ -1,11 +1,11 @@
 package uk.co.loonyrules.sql.models;
 
-import com.google.common.base.Predicates;
 import com.google.common.collect.Iterators;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -50,7 +50,7 @@ public class TableSchema implements Iterable<TableColumn>
      */
     public String getDatabase()
     {
-        return database;
+        return this.database;
     }
 
     /**
@@ -59,7 +59,7 @@ public class TableSchema implements Iterable<TableColumn>
      */
     public String getTable()
     {
-        return table;
+        return this.table;
     }
 
     /**
@@ -68,7 +68,7 @@ public class TableSchema implements Iterable<TableColumn>
      */
     public List<TableColumn> getColumns()
     {
-        return columns;
+        return this.columns;
     }
 
     /**
@@ -86,7 +86,7 @@ public class TableSchema implements Iterable<TableColumn>
      */
     public boolean isEmpty()
     {
-        return columns.isEmpty();
+        return this.columns.isEmpty();
     }
 
     /**
@@ -95,9 +95,8 @@ public class TableSchema implements Iterable<TableColumn>
      */
     @Override
     public Iterator<TableColumn> iterator()
-
     {
-        return Iterators.filter(columns.iterator(), Predicates.notNull());
+        return Iterators.filter(this.columns.iterator(), Objects::nonNull);
     }
 
     /**
@@ -108,9 +107,9 @@ public class TableSchema implements Iterable<TableColumn>
     public String toString()
     {
         return "TableSchema{" +
-                "database='" + database + '\'' +
-                ", table='" + table + '\'' +
-                ", columns=" + columns +
+                "database='" + this.database + '\'' +
+                ", table='" + this.table + '\'' +
+                ", columns=" + this.columns +
                 '}';
     }
 
