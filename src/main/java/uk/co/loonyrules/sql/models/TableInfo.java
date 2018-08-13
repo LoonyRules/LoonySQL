@@ -84,7 +84,7 @@ public class TableInfo
      */
     public String getTableCatalog()
     {
-        return tableCatalog;
+        return this.tableCatalog;
     }
 
     /**
@@ -93,7 +93,7 @@ public class TableInfo
      */
     public String getTableSchema()
     {
-        return tableSchema;
+        return this.tableSchema;
     }
 
     /**
@@ -102,7 +102,7 @@ public class TableInfo
      */
     public String getTableName()
     {
-        return tableName;
+        return this.tableName;
     }
 
     /**
@@ -111,7 +111,7 @@ public class TableInfo
      */
     public String getTableType()
     {
-        return tableType;
+        return this.tableType;
     }
 
     /**
@@ -120,7 +120,7 @@ public class TableInfo
      */
     public String getEngine()
     {
-        return engine;
+        return this.engine;
     }
 
     /**
@@ -129,7 +129,7 @@ public class TableInfo
      */
     public int getVersion()
     {
-        return version;
+        return this.version;
     }
 
     /**
@@ -138,7 +138,7 @@ public class TableInfo
      */
     public String getRowFormat()
     {
-        return rowFormat;
+        return this.rowFormat;
     }
 
     /**
@@ -147,7 +147,7 @@ public class TableInfo
      */
     public long getTableRows()
     {
-        return tableRows;
+        return this.tableRows;
     }
 
     /**
@@ -156,7 +156,7 @@ public class TableInfo
      */
     public long getAverageRowLength()
     {
-        return averageRowLength;
+        return this.averageRowLength;
     }
 
     /**
@@ -165,7 +165,7 @@ public class TableInfo
      */
     public long getDataLength()
     {
-        return dataLength;
+        return this.dataLength;
     }
 
     /**
@@ -174,7 +174,7 @@ public class TableInfo
      */
     public long getMaxDataLength()
     {
-        return maxDataLength;
+        return this.maxDataLength;
     }
 
     /**
@@ -183,7 +183,7 @@ public class TableInfo
      */
     public int getIndexLength()
     {
-        return indexLength;
+        return this.indexLength;
     }
 
     /**
@@ -192,7 +192,7 @@ public class TableInfo
      */
     public long getDataFree()
     {
-        return dataFree;
+        return this.dataFree;
     }
 
     /**
@@ -201,7 +201,7 @@ public class TableInfo
      */
     public String getAutoIncrement()
     {
-        return autoIncrement;
+        return this.autoIncrement;
     }
 
     /**
@@ -210,7 +210,7 @@ public class TableInfo
      */
     public String getCreateTime()
     {
-        return createTime;
+        return this.createTime;
     }
 
     /**
@@ -219,7 +219,7 @@ public class TableInfo
      */
     public String getUpdateTime()
     {
-        return updateTime;
+        return this.updateTime;
     }
 
     /**
@@ -228,7 +228,7 @@ public class TableInfo
      */
     public String getCheckTime()
     {
-        return checkTime;
+        return this.checkTime;
     }
 
     /**
@@ -237,7 +237,7 @@ public class TableInfo
      */
     public String getTableCollation()
     {
-        return tableCollation;
+        return this.tableCollation;
     }
 
     /**
@@ -246,7 +246,7 @@ public class TableInfo
      */
     public String getChecksum()
     {
-        return checksum;
+        return this.checksum;
     }
 
     /**
@@ -255,7 +255,7 @@ public class TableInfo
      */
     public String getCreateOptions()
     {
-        return createOptions;
+        return this.createOptions;
     }
 
     /**
@@ -264,7 +264,7 @@ public class TableInfo
      */
     public String getTableComment()
     {
-        return tableComment;
+        return this.tableComment;
     }
 
     /**
@@ -275,27 +275,27 @@ public class TableInfo
     public String toString()
     {
         return "TableInfo{" +
-                "tableCatalog='" + tableCatalog + '\'' +
-                ", tableSchema='" + tableSchema + '\'' +
-                ", tableName='" + tableName + '\'' +
-                ", tableType='" + tableType + '\'' +
-                ", engine='" + engine + '\'' +
-                ", version=" + version +
-                ", rowFormat='" + rowFormat + '\'' +
-                ", tableRows=" + tableRows +
-                ", averageRowLength=" + averageRowLength +
-                ", dataLength=" + dataLength +
-                ", maxDataLength=" + maxDataLength +
-                ", indexLength=" + indexLength +
-                ", dataFree=" + dataFree +
-                ", autoIncrement='" + autoIncrement + '\'' +
-                ", createTime='" + createTime + '\'' +
-                ", updateTime='" + updateTime + '\'' +
-                ", checkTime='" + checkTime + '\'' +
-                ", tableCollation='" + tableCollation + '\'' +
-                ", checksum='" + checksum + '\'' +
-                ", createOptions='" + createOptions + '\'' +
-                ", tableComment='" + tableComment + '\'' +
+                "tableCatalog='" + this.tableCatalog + '\'' +
+                ", tableSchema='" + this.tableSchema + '\'' +
+                ", tableName='" + this.tableName + '\'' +
+                ", tableType='" + this.tableType + '\'' +
+                ", engine='" + this.engine + '\'' +
+                ", version=" + this.version +
+                ", rowFormat='" + this.rowFormat + '\'' +
+                ", tableRows=" + this.tableRows +
+                ", averageRowLength=" + this.averageRowLength +
+                ", dataLength=" + this.dataLength +
+                ", maxDataLength=" + this.maxDataLength +
+                ", indexLength=" + this.indexLength +
+                ", dataFree=" + this.dataFree +
+                ", autoIncrement='" + this.autoIncrement + '\'' +
+                ", createTime='" + this.createTime + '\'' +
+                ", updateTime='" + this.updateTime + '\'' +
+                ", checkTime='" + this.checkTime + '\'' +
+                ", tableCollation='" + this.tableCollation + '\'' +
+                ", checksum='" + this.checksum + '\'' +
+                ", createOptions='" + this.createOptions + '\'' +
+                ", tableComment='" + this.tableComment + '\'' +
                 '}';
     }
 

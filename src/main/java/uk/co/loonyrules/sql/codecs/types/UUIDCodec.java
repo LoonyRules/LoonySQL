@@ -34,7 +34,8 @@ public class UUIDCodec extends Codec<UUID>
     @Override
     public UUID decode(ResultSet resultSet, Class<?> type, String fieldName) throws SQLException
     {
-        String string = resultSet.getString(fieldName);
+        // Get the string to decode
+        final String string = resultSet.getString(fieldName);
 
         // Allows for returning null UUID's
         return string == null || string.isEmpty() ? null : UUID.fromString(string);

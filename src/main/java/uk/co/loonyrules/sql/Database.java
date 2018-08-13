@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -63,7 +64,7 @@ public class Database
      */
     public HikariDataSource getHikariDataSource()
     {
-        return hikariDataSource;
+        return this.hikariDataSource;
     }
 
     /**
@@ -72,7 +73,7 @@ public class Database
      */
     public ExecutorService getExecutorService()
     {
-        return executorService;
+        return this.executorService;
     }
 
     /**
@@ -81,7 +82,7 @@ public class Database
      */
     public Map<String, String> getTablePlaceholders()
     {
-        return tablePlaceholders;
+        return this.tablePlaceholders;
     }
 
     /**
@@ -91,7 +92,7 @@ public class Database
      */
     public Optional<String> getTablePlaceholder(String placeholder)
     {
-        return Optional.ofNullable(tablePlaceholders.get(placeholder));
+        return Optional.ofNullable(this.tablePlaceholders.get(placeholder));
     }
 
     /**
@@ -131,7 +132,7 @@ public class Database
         Preconditions.checkArgument(isConnected(), "Connection hasn't been initialised.");
 
         // Return a new Connection
-        return hikariDataSource.getConnection();
+        return this.hikariDataSource.getConnection();
     }
 
     /**
@@ -140,7 +141,7 @@ public class Database
      */
     public boolean isConnected()
     {
-        return hikariDataSource != null && !hikariDataSource.isClosed();
+        return this.hikariDataSource != null && !this.hikariDataSource.isClosed();
     }
 
     /**
@@ -178,7 +179,7 @@ public class Database
      */
     public void runAsync(Consumer<Database> consumer)
     {
-        executorService.execute(() -> consumer.accept(this));
+        this.executorService.execute(() -> consumer.accept(this));
     }
 
     /**
@@ -190,40 +191,53 @@ public class Database
         Preconditions.checkArgument(!isConnected(), "Already connected to the Database.");
 
         // Initialise our HikariConfig
-        HikariConfig hikariConfig = new HikariConfig();
+        final HikariConfig hikariConfig = new HikariConfig();
 
         // Setting the driver class name
-        if(credentials.getDriverClass() != null)
-            hikariConfig.setDriverClassName(credentials.getDriverClass());
+        if(this.credentials.getDriverClass() != null)
+            hikariConfig.setDriverClassName(this.credentials.getDriverClass());
 
-        // TODO: Make configurable
-        hikariConfig.setMaximumPoolSize(10);
+        // Setting the maximum pool size
+        hikariConfig.setMaximumPoolSize(this.credentials.getMaximumPoolSize());
 
-        // Setting the Jdbc url
-        hikariConfig.setJdbcUrl(String.format("jdbc:mysql://%s:%s/%s", credentials.getHost(), credentials.getPort(), credentials.getDatabase()));
+        // Setting the Jdbc url (TODO: Make TimeZone ID configurable?)
+        hikariConfig.setJdbcUrl(String.format(
+                "jdbc:mysql://%s:%s/%s?useLegacyDatetimeCode=false&serverTimezone=%s",
+                this.credentials.getHost(),
+                this.credentials.getPort(),
+                this.credentials.getDatabase(),
+                TimeZone.getDefault().getID()
+        ));
 
         // Adding our databaseName as a property
-        hikariConfig.addDataSourceProperty("databaseName", credentials.getDatabase());
+        hikariConfig.addDataSourceProperty("databaseName", this.credentials.getDatabase());
+
+        // Adding our encoding type as a property
+        hikariConfig.addDataSourceProperty("characterEncoding", this.credentials.getEncoding());
+        hikariConfig.addDataSourceProperty("collationConnection", this.credentials.getCollation());
+        hikariConfig.addDataSourceProperty("useUnicode","true");
+
+        hikariConfig.setConnectionInitSql("SET NAMES utf8mb4");
 
         // Setting the authentication credentials
-        hikariConfig.setUsername(credentials.getUsername());
-        hikariConfig.setPassword(credentials.getPassword());
+        hikariConfig.setUsername(this.credentials.getUsername());
+        hikariConfig.setPassword(this.credentials.getPassword());
 
         // Initialising the Data Source
-        hikariDataSource = new HikariDataSource(hikariConfig);
+        this.hikariDataSource = new HikariDataSource(hikariConfig);
 
         try {
             // Setting the Login Timeout
-            hikariDataSource.setLoginTimeout(credentials.getTimeout());
+            this.hikariDataSource.setLoginTimeout(this.credentials.getTimeout());
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
         // Creating our executor for this Database
-        executorService = Executors.newCachedThreadPool();
+        this.executorService = Executors.newCachedThreadPool();
 
         // Add a shutdown hook
-        Runtime.getRuntime().addShutdownHook(shutdownThread = new Thread(this::disconnect));
+        Runtime.getRuntime().addShutdownHook(this.shutdownThread = new Thread(this::disconnect));
     }
 
     /**
@@ -235,21 +249,23 @@ public class Database
         Preconditions.checkArgument(isConnected(), "Database connection has already been disconnected.");
 
         // Closing the hikariDataSource
-        hikariDataSource.close();
+        this.hikariDataSource.close();
 
         // Shutting down the pool
-        executorService.shutdown();
+        this.executorService.shutdown();
 
         // If shutdownThread is active
-        if(shutdownThread == null || !shutdownThread.isAlive())
+        if(this.shutdownThread == null || !this.shutdownThread.isAlive())
             return;
 
         try {
             // Removing our ShutdownHook
-            Runtime.getRuntime().removeShutdownHook(shutdownThread);
-            shutdownThread = null;
+            Runtime.getRuntime().removeShutdownHook(this.shutdownThread);
         } catch(IllegalStateException e) {
-
+            // TODO: Do we want this to print?
+        } finally {
+            // Uninit our thread variable
+            this.shutdownThread = null;
         }
     }
 
@@ -274,7 +290,7 @@ public class Database
     public <T> Optional<T> findFirst(Class<T> clazz, Query query)
     {
         // Find results associated with the current Query but limit the results
-        List<T> results = find(clazz, query.limit(query.getSkip() + 1));
+        final List<T> results = find(clazz, query.limit(query.getSkip() + 1));
 
         // Return the found data
         return Optional.ofNullable(results.iterator().hasNext() ? results.iterator().next() : null);
@@ -311,16 +327,16 @@ public class Database
     public <T> List<T> find(Class<T> clazz, Query query)
     {
         // Where we'll store our Results
-        List<T> results = Lists.newArrayList();
+        final List<T> results = Lists.newArrayList();
 
         // Get the Table annotation wrapped in an Optional
-        Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
+        final Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
 
         // Not found so throw an error
         Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + clazz + " when find results.");
 
         // Get the Table annotation
-        Table table = tableOptional.get();
+        final Table table = tableOptional.get();
 
         // Our SQL objects used
         Connection connection = null;
@@ -366,6 +382,83 @@ public class Database
     }
 
     /**
+     * Count the number of rows with the class {@Table} data
+     *
+     * @param clazz to count rows for
+     * @return number of rows founc
+     */
+    public long count(Class<?> clazz)
+    {
+        // Get the Table annotation wrapped in an Optional
+        final Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
+
+        // Not found so throw an error
+        Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + clazz + " when counting results.");
+
+        // Get the Table annotation
+        final Table table = tableOptional.get();
+
+        // Our SQL objects used
+        final Optional<TableInfo> tableInfoOptional = findFirst(TableInfo.class, new Query().where("TABLE_NAME", replaceTableNamePlaceholders(table.name())));
+
+        // Return number of Table Rows found or -1 if we didn't find a Table with the name
+        return tableInfoOptional.map(TableInfo::getTableRows).orElse(-1L);
+    }
+
+    /**
+     * Count the number of rows for a {@link Class} that matches a {@link Query}
+     * @param clazz to check for
+     * @param query filter for this query
+     * @return number of rows counted after filtering
+     */
+    public long count(Class<?> clazz, Query query)
+    {
+        // Number of rows counted
+        long numberOfRows = 0;
+
+        // Get the Table annotation wrapped in an Optional
+        final Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
+
+        // Not found so throw an error
+        Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + clazz + " when counting results.");
+
+        // Get the Table annotation
+        final Table table = tableOptional.get();
+
+        // Our SQL objects used
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        // Wrapping in a SQLException try and catch
+        try {
+            // Get a new connection
+            connection = getConnection();
+
+            // Preparing our statement
+            preparedStatement = prepare(connection, String.format("SELECT COUNT(*) FROM %s %s", replaceTableNamePlaceholders(table.name()), query.toString()), query.getWheres().values().toArray());
+
+            // Execute the query
+            resultSet = preparedStatement.executeQuery();
+
+            // Get number of rows
+            if(resultSet.first() || resultSet.next())
+            {
+                // Get the number of rows it counted
+                numberOfRows = resultSet.getInt("COUNT(*)");
+            }
+        } catch (SQLException e) {
+            // Print the stacktrace
+            e.printStackTrace();
+        } finally {
+            closeResources(connection, preparedStatement, resultSet);
+        }
+
+        // Return our results
+        return numberOfRows;
+    }
+
+    /**
      * Finds all rows associated with the clazz @Table data and deletes them
      * @param clazz to get data for
      * @return number of rows deleted
@@ -398,18 +491,17 @@ public class Database
         long deletedCount = 0;
 
         // Get the Table annotation wrapped in an Optional
-        Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
+        final Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
 
         // Not found so throw an error
         Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + clazz + " when deleting results.");
 
         // Get the Table annotation
-        Table table = tableOptional.get();
+        final Table table = tableOptional.get();
 
         // Our SQL objects used
         Connection connection = null;
         PreparedStatement preparedStatement = null;
-        ResultSet resultSet = null;
 
         // Wrapping in a SQLException try and catch
         try {
@@ -425,7 +517,7 @@ public class Database
             // Print the stacktrace
             e.printStackTrace();
         } finally {
-            closeResources(connection, preparedStatement, resultSet);
+            closeResources(connection, preparedStatement);
         }
 
         // Return our results
@@ -434,19 +526,19 @@ public class Database
 
     /**
      * Describe (aka EXPLAIN) an @Table coming from a Class
-     * @param clazz to get Descibe/Explain data for
+     * @param clazz to get Describe/Explain data for
      * @return retrieved TableSchema
      */
     public TableSchema describe(Class<?> clazz)
     {
         // Get the Table annotation
-        Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
+        final Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
 
         // Not found so throw an error
         Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + clazz + " when describing Table.");
 
         // Get the Table annotation
-        Table table = tableOptional.get();
+        final Table table = tableOptional.get();
 
         // MySQL related data
         Connection connection = null;
@@ -454,7 +546,7 @@ public class Database
         ResultSet resultSet = null;
 
         // Data to return
-        List<TableColumn> columns = Lists.newArrayList();
+        final List<TableColumn> columns = Lists.newArrayList();
 
         try {
             // Get a new Connection
@@ -501,20 +593,20 @@ public class Database
         boolean modified = false;
 
         // Get the Table annotation
-        Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
+        final Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
 
         // Not found so throw an error
         Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + clazz + " when updating Table.");
 
         // Get the Table annotation
-        Table table = tableOptional.get();
+        final Table table = tableOptional.get();
 
         // We're not allowed to do any creation or modifications
         if(!table.create() && table.modifyType() == ModifyType.NONE)
             throw new IllegalArgumentException(String.valueOf("Attempted to update @Table for " + clazz + " even though the properties say we can't."));
 
         // Get our InformationSchema from our search
-        List<TableInfo> results = find(TableInfo.class, new Query()
+        final List<TableInfo> results = find(TableInfo.class, new Query()
                 .where("TABLE_SCHEMA", credentials.getDatabase())
                 .where("TABLE_NAME", replaceTableNamePlaceholders((String) ReflectionUtil.getTableName(clazz)))
                 .limit(1));
@@ -556,23 +648,23 @@ public class Database
             return false;
 
         // Get our TableSchema result
-        TableSchema tableSchema = describe(clazz);
+        final TableSchema tableSchema = describe(clazz);
 
         // No data found, so do nothing
         if(tableSchema.isEmpty())
             return false;
 
         // Get Column names
-        List<String> schemaColumnNames = tableSchema.getColumnNames();
+        final List<String> schemaColumnNames = tableSchema.getColumnNames();
 
         // Get our Column names for our Class
-        List<String> classColumnNames = ReflectionUtil.getColumnNames(clazz);
+        final List<String> classColumnNames = ReflectionUtil.getColumnNames(clazz);
 
         // Columns to add
-        List<String> toAdd = (table.modifyType() == ModifyType.ADD || table.modifyType() == ModifyType.ADD_REMOVE ? classColumnNames.stream().filter(name -> !schemaColumnNames.contains(name)).collect(Collectors.toList()) : Lists.newArrayList());
+        final List<String> toAdd = (table.modifyType() == ModifyType.ADD || table.modifyType() == ModifyType.ADD_REMOVE ? classColumnNames.stream().filter(name -> !schemaColumnNames.contains(name)).collect(Collectors.toList()) : Lists.newArrayList());
 
         // Columns to remove
-        List<String> toRemove = (table.modifyType() == ModifyType.REMOVE || table.modifyType() == ModifyType.ADD_REMOVE ? schemaColumnNames.stream().filter(name -> !classColumnNames.contains(name)).collect(Collectors.toList()) : Lists.newArrayList());
+        final List<String> toRemove = (table.modifyType() == ModifyType.REMOVE || table.modifyType() == ModifyType.ADD_REMOVE ? schemaColumnNames.stream().filter(name -> !classColumnNames.contains(name)).collect(Collectors.toList()) : Lists.newArrayList());
 
         // Query stuff
         try {
@@ -611,13 +703,13 @@ public class Database
     public void reload(Object object, Query query)
     {
         // Get the Table annotation wrapped in an Optional
-        Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(object.getClass());
+        final Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(object.getClass());
 
         // Not found so throw an error
         Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + object.getClass() + " when reloading.");
 
         // Get the Table annotation
-        Table table = tableOptional.get();
+        final Table table = tableOptional.get();
 
         // Limit our response to 1
         query.limit(1);
@@ -656,19 +748,19 @@ public class Database
     public void save(Object object)
     {
         // Get the Table annotation wrapped in an Optional
-        Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(object.getClass());
+        final Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(object.getClass());
 
         // Not found so throw an error
         Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + object.getClass() + " when saving.");
 
         // Get the Table annotation
-        Table table = tableOptional.get();
+        final Table table = tableOptional.get();
 
         // Get the Primary Field and the true name of the Primary Column
-        Optional<Field> primaryOptional = ReflectionUtil.getPrimaryField(object.getClass());
+        final Optional<Field> primaryOptional = ReflectionUtil.getPrimaryField(object.getClass());
 
         // Generating our Query objects
-        Query query = Query.from(object);
+        final Query query = Query.from(object);
 
         // Our SQL objects used
         Connection connection = null;
@@ -714,7 +806,7 @@ public class Database
             if(primaryOptional.isPresent())
             {
                 // Getting the Primary Field
-                Field field = primaryOptional.get();
+                final Field field = primaryOptional.get();
 
                 // autoIncrement type so get last data
                 if(field.getAnnotation(Primary.class).autoIncrement())
@@ -809,7 +901,7 @@ public class Database
     private PreparedStatement prepare(Connection connection, String statement, Object[] data) throws SQLException
     {
         // Prepare our PreparedStatement
-        PreparedStatement preparedStatement = connection.prepareStatement(statement);
+        final PreparedStatement preparedStatement = connection.prepareStatement(statement);
 
         // Iterate through the data
         for(int i = 1; i <= data.length; i++)
@@ -842,19 +934,19 @@ public class Database
     private PreparedStatement prepareCreate(Connection connection, Class<?> clazz) throws SQLException
     {
         // Get the Table annotation
-        Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
+        final Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
 
         // Not found so throw an error
         Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + clazz + " when preparing Table creation.");
 
         // Get the Table annotation
-        Table table = tableOptional.get();
+        final Table table = tableOptional.get();
 
         // Get the Field's for this Class
-        Map<String, Field> fields = ReflectionUtil.getFields(clazz);
+        final Map<String, Field> fields = ReflectionUtil.getFields(clazz);
 
         // Where our query string data will be stored
-        StringBuilder query = new StringBuilder();
+        final StringBuilder query = new StringBuilder();
 
         // Our Primary Field
         Field primaryField = null;
@@ -863,21 +955,21 @@ public class Database
         for (Map.Entry<String, Field> entry : fields.entrySet())
         {
             // The Field in question
-            Field field = entry.getValue();
+            final Field field = entry.getValue();
 
             // The name of the Column in the Table
-            Column column = ReflectionUtil.getColumnAnnotation(field).get();
-            String columnName =  ReflectionUtil.getColumnName(entry.getValue());
+            final Column column = ReflectionUtil.getColumnAnnotation(field).get();
+            final String columnName =  ReflectionUtil.getColumnName(entry.getValue());
 
             // Get the Codec for this Field
-            Codec codec = Codec.getCodec(field.getType());
+            final  Codec codec = Codec.getCodec(field.getType());
 
             // No Codec known, skip!
             if(codec == null)
                 continue;
 
             // Getting the maxLength for our Column
-            int maxLength = codec.calculateMaxLength(column.maxLength());
+            final int maxLength = codec.calculateMaxLength(column.maxLength());
 
             // Appending the column data first
             query
@@ -899,7 +991,7 @@ public class Database
             query.append(", ");
 
             // If it's the Primary
-            Primary primary = field.getAnnotation(Primary.class);
+            final Primary primary = field.getAnnotation(Primary.class);
 
             // Not Primary annotation so ignore
             if(primary == null)
@@ -941,40 +1033,40 @@ public class Database
     private PreparedStatement prepareAlter(Connection connection, Class<?> clazz, List<String> toAdd, List<String> toRemove) throws SQLException
     {
         // Get the Table annotation
-        Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
+        final Optional<Table> tableOptional = ReflectionUtil.getTableAnnotation(clazz);
 
         // Not found so throw an error
         Preconditions.checkArgument(tableOptional.isPresent(), "@Table annotation not found for " + clazz + " when preparing Table creation.");
 
         // Get the Table annotation
-        Table table = tableOptional.get();
+        final Table table = tableOptional.get();
 
         // Where our query string data will be stored
-        StringBuilder query = new StringBuilder();
+        final StringBuilder query = new StringBuilder();
 
         // Iterate through all Field'entry
         for (Map.Entry<String, Field> entry : ReflectionUtil.getFields(clazz).entrySet())
         {
             // The Field in question
-            Field field = entry.getValue();
+            final Field field = entry.getValue();
 
             // The name of the Column in the Table
-            Column column = ReflectionUtil.getColumnAnnotation(field).get();
-            String columnName =  ReflectionUtil.getColumnName(entry.getValue());
+            final Column column = ReflectionUtil.getColumnAnnotation(field).get();
+            final String columnName =  ReflectionUtil.getColumnName(entry.getValue());
 
             // Doesn't need to be added
             if(!toAdd.contains(columnName))
                 continue;
 
             // Get the Codec for this Field
-            Codec codec = Codec.getCodec(field.getType());
+            final Codec codec = Codec.getCodec(field.getType());
 
             // No Codec known, skip!
             if(codec == null)
                 continue;
 
             // Getting the maxLength for our Column
-            int maxLength = codec.calculateMaxLength(column.maxLength());
+            final int maxLength = codec.calculateMaxLength(column.maxLength());
 
             // Appending the column data first
             query
@@ -1021,7 +1113,7 @@ public class Database
     private void populate(Object object, ResultSet resultSet)
     {
         // Getting the Fields for this object
-        Map<String, Field> fields = ReflectionUtil.getFields(object.getClass());
+        final Map<String, Field> fields = ReflectionUtil.getFields(object.getClass());
 
         // No known fields so just return
         if(fields == null || fields.isEmpty())
@@ -1031,20 +1123,20 @@ public class Database
         for(Map.Entry<String, Object> entry : StorageUtil.toMap(resultSet).entrySet())
         {
             // Name of the Column
-            String column = entry.getKey();
+            final String column = entry.getKey();
 
             // Get the Field associated with the Column name
-            Optional<Field> fieldOptional = ReflectionUtil.getColumnField(fields, column);
+            final Optional<Field> fieldOptional = ReflectionUtil.getColumnField(fields, column);
 
             // No Field found for this Column name
             if(!fieldOptional.isPresent())
                 continue;
 
             // The Field for this data
-            Field field = fieldOptional.get();
+            final Field field = fieldOptional.get();
 
             // Get the Codec for this type
-            Codec codec = Codec.getCodec(field.getType());
+            final Codec codec = Codec.getCodec(field.getType());
 
             // No Codec
             if(codec == null)

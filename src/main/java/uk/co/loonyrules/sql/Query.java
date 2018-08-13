@@ -1,5 +1,6 @@
 package uk.co.loonyrules.sql;
 
+import uk.co.loonyrules.sql.annotations.Primary;
 import uk.co.loonyrules.sql.utils.ReflectionUtil;
 
 import java.lang.reflect.Field;
@@ -23,21 +24,25 @@ public class Query
     public static Query from(Object object)
     {
         // Query to return
-        Query query = new Query();
+        final Query query = new Query();
 
         // Get all Field's for this Object's Class
         for(Field field : ReflectionUtil.getFields(object.getClass()).values())
         {
             // Get the Column name
-            String columnName = ReflectionUtil.getColumnName(field);
+            final String columnName = ReflectionUtil.getColumnName(field);
 
-            // TODO: Implement AutoIncrement support
-            // Skipping if Primary not wanted, or @Primary is autoIncremented
-            //Primary primary = field.getAnnotation(Primary.class);
+            // Get our @Primary annotation
+            final Primary primary = field.getAnnotation(Primary.class);
 
-            // We don't want a Primary field
-            //if(primary != null && primary.autoIncrement())
-            //    continue;
+            try {
+                // We don't have a Primary key or it's an incrementation that's not yet assigned.
+                if(primary != null && primary.autoIncrement() && ((int) field.get(object)) == 0)
+                    continue;
+            } catch (IllegalAccessException e) {
+                // Throw the error (int's only supported)
+                e.printStackTrace();
+            }
 
             // Add to the where conditions
             query.where(columnName, ReflectionUtil.getFieldValue(field, object));
@@ -55,14 +60,14 @@ public class Query
     public static Query generatePrimary(Object object)
     {
         // Get the Primary Field
-        Optional<Field> primaryOptional = ReflectionUtil.getPrimaryField(object.getClass());
+        final Optional<Field> primaryOptional = ReflectionUtil.getPrimaryField(object.getClass());
 
         // No Primary field so throw unsupported operation
         if(!primaryOptional.isPresent())
             throw new UnsupportedOperationException("No @Primary Field found in " + object.getClass() + ".");
 
         // Get our Field
-        Field field = primaryOptional.get();
+        final Field field = primaryOptional.get();
 
         // Getting the value of the Field
         Object fieldValue = null;
@@ -90,7 +95,7 @@ public class Query
      */
     public LinkedHashMap<String, Object> getWheres()
     {
-        return wheres;
+        return this.wheres;
     }
 
     /**
@@ -99,7 +104,7 @@ public class Query
      */
     public String getWheresAsColumns()
     {
-        return wheres.isEmpty() ? "" : wheres.entrySet().stream()
+        return this.wheres.isEmpty() ? "" : this.wheres.entrySet().stream()
                 .map(entry -> "`" + entry.getKey() + "`")
                 .collect(Collectors.joining(", "));
     }
@@ -110,7 +115,7 @@ public class Query
      */
     public String getWheresAsPlaceholders()
     {
-        return wheres.isEmpty() ? "" : wheres.entrySet().stream()
+        return this.wheres.isEmpty() ? "" : this.wheres.entrySet().stream()
                 .map(entry -> "?")
                 .collect(Collectors.joining(", "));
     }
@@ -121,7 +126,7 @@ public class Query
      */
     public int getSkip()
     {
-        return skip;
+        return this.skip;
     }
 
     /**
@@ -130,7 +135,7 @@ public class Query
      */
     public int getLimit()
     {
-        return limit;
+        return this.limit;
     }
 
     /**
@@ -142,7 +147,7 @@ public class Query
     public Query where(String column, Object value)
     {
         // Put into the conditions map for later
-        wheres.put(column, value);
+        this.wheres.put(column, value);
 
         // Returning instance for chaining
         return this;
@@ -177,23 +182,36 @@ public class Query
     }
 
     /**
+     * Check if a where condition exists
+     * @param where to check for
+     * @return if it was found or not
+     */
+    public boolean hasWhere(String where)
+    {
+        return this.wheres.containsKey(where);
+    }
+
+    /**
      * Build the current "WHERE" conditions as a string
      * @return "WHERE" conditions as a string
      */
     public String buildWhere()
     {
-        return wheres.isEmpty() ? "" : "WHERE " + wheres.entrySet().stream()
+        return this.wheres.isEmpty() ? "" : "WHERE " + this.wheres.entrySet().stream()
                 .map(entry -> entry.getKey() + "=?")
                 .collect(Collectors.joining(" AND "));
     }
 
     /**
+     * Build the current "WHERE" conditions with their
+     * placeholder characters instead of their values.
      *
-     * @return
+     * @return "WHERE" condition with placeholders for
+     *         {@link java.sql.PreparedStatement}'s.
      */
     public String buildConditionPlaceholders()
     {
-        return wheres.isEmpty() ? "" : wheres.entrySet().stream()
+        return this.wheres.isEmpty() ? "" : this.wheres.entrySet().stream()
                 .map(entry -> entry.getKey() + "=?")
                 .collect(Collectors.joining(", "));
     }
@@ -207,15 +225,15 @@ public class Query
         if (o == null || getClass() != o.getClass())
             return false;
 
-        Query query = (Query) o;
+        final Query query = (Query) o;
 
-        if (skip != query.skip)
+        if (this.skip != query.skip)
             return false;
 
-        if (limit != query.limit)
+        if (this.limit != query.limit)
             return false;
 
-        if (!wheres.equals(query.wheres))
+        if (!this.wheres.equals(query.wheres))
             return false;
 
         return true;
@@ -223,9 +241,9 @@ public class Query
     @Override
     public int hashCode()
     {
-        int result = wheres.hashCode();
-        result = 31 * result + skip;
-        result = 31 * result + limit;
+        int result = this.wheres.hashCode();
+        result = 31 * result + this.skip;
+        result = 31 * result + this.limit;
         return result;
     }
 
@@ -236,19 +254,18 @@ public class Query
     @Override
     public String toString()
     {
-        StringBuilder stringBuilder = new StringBuilder(buildWhere());
+        final StringBuilder stringBuilder = new StringBuilder(buildWhere());
 
         // Managing skip/limit
-
-        if(skip != 0 || limit != 0)
+        if(this.skip != 0 || this.limit != 0)
         {
             stringBuilder.append(" LIMIT ");
 
-            if(skip != 0)
-                stringBuilder.append(skip);
+            if(this.skip != 0)
+                stringBuilder.append(this.skip);
 
-            if(limit != 0)
-                stringBuilder.append(skip != 0 ? "," : "").append(limit);
+            if(this.limit != 0)
+                stringBuilder.append(this.skip != 0 ? "," : "").append(this.limit);
         }
 
         return stringBuilder.toString();

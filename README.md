@@ -14,7 +14,7 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
     <dependency>
         <groupId>uk.co.loonyrules</groupId>
         <artifactId>sql</artifactId>
-        <version>1.6.1-SNAPSHOT</version>
+        <version>1.6.6-SNAPSHOT</version>
 
         <scope>compile</scope>
     </dependency>
@@ -22,7 +22,7 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
 ```
 
 ### Download (Don't use maven? You can just download the jar!)
-[LoonyRules Repo](http://repo.loonyrules.co.uk/#browse/browse/components:maven-snapshots:18ddeccdfb491ecb84ba4cf15af103fc)
+[LoonyRules Repo](http://repo.loonyrules.co.uk/#browse/browse/components:maven-snapshots:4b378653591c67229a851cdf6b8c670a)
 
 ### Features
  * **Codecs**
@@ -43,7 +43,8 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
    * Custom column name
    * Default name to the Field name
  * **@Primary**
-   * Non-AutoIncrement support (AutoIncrement support coming soon!)
+   * Non-AutoIncrement support
+   * Integer AutoIncrement support
  * **Tables**
    * Creation
    * Modification to structure (Adding/Removing columns)
@@ -52,8 +53,14 @@ I got bored once, made a quick, but bad SQL library. I disliked it and now I'm m
    * DELETE (delete all rows, delete a specified row)
    * INSERT [...] ON DUPLICATE KEY [...] (save)
    * EXPLAIN / DESCRIBE
+   * COUNT (the number of rows matching your Query)
  * **Other**
    * Delete all table contents
+   * Configuration support
+     * Maximum Pool Size
+     * Encoding
+     * Collation
+   * Unicode support
 
 ### TODO
- * Unknown
+ * Support an `@Embeddable` system that'll pull data from more than 1 Table from inside of an Object.

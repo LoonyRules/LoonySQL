@@ -1,6 +1,5 @@
 package uk.co.loonyrules.sql;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.loonyrules.sql.codecs.RankCodec;
 import uk.co.loonyrules.sql.models.TableInfo;
@@ -9,10 +8,7 @@ import uk.co.loonyrules.sql.models.User;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 public class DatabaseTest
 {
@@ -26,6 +22,8 @@ public class DatabaseTest
     @Test
     public void connect()
     {
+        TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
+
         // Initialising database connectivity and methods example
         {
             // Credentials for authentication
@@ -148,7 +146,7 @@ public class DatabaseTest
             connection = database.getConnection();
 
             // Prepare our statement
-            preparedStatement = connection.prepareStatement("UPDATE `users` SET random = ? WHERE uuid = ?");
+            preparedStatement = connection.prepareStatement("UPDATE `" + database.getTablePlaceholder("environment", "test") + "_users` SET random = ? WHERE uuid = ?");
 
             // Setting our replacements
             preparedStatement.setInt(1, random.nextInt(50));

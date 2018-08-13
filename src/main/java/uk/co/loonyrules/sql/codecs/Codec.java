@@ -108,7 +108,7 @@ public abstract class Codec<T>
      */
     public Set<Class<?>> getTypes()
     {
-        return types;
+        return this.types;
     }
 
     /**
@@ -127,7 +127,7 @@ public abstract class Codec<T>
      */
     public String getSQLType()
     {
-        return sqlType;
+        return this.sqlType;
     }
 
     /**
@@ -136,7 +136,7 @@ public abstract class Codec<T>
      */
     public int getMaxLength()
     {
-        return maxLength;
+        return this.maxLength;
     }
 
     /**
@@ -146,7 +146,7 @@ public abstract class Codec<T>
      */
     public int calculateMaxLength(int input)
     {
-        return maxLength == -1 ? -1 : maxLength == 0 ? input : input > maxLength ? maxLength : input;
+        return this.maxLength == -1 ? -1 : this.maxLength == 0 ? input : input > this.maxLength ? this.maxLength : input;
     }
 
     /**
@@ -173,9 +173,9 @@ public abstract class Codec<T>
     public String toString()
     {
         return "Codec{" +
-                "types=" + types +
-                ", sqlType='" + sqlType + '\'' +
-                ", maxLength=" + maxLength +
+                "types=" + this.types +
+                ", sqlType='" + this.sqlType + '\'' +
+                ", maxLength=" + this.maxLength +
                 '}';
     }
 }

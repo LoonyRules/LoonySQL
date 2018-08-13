@@ -21,11 +21,11 @@ public class StorageUtil
     public static Map<String, Object> toMap(ResultSet resultSet)
     {
         // Map to put our data int
-        Map<String, Object> columnData = Maps.newHashMap();
+        final Map<String, Object> columnData = Maps.newHashMap();
 
         try {
             // Get the ResultSetMetaData for this index
-            ResultSetMetaData metaData = resultSet.getMetaData();
+            final ResultSetMetaData metaData = resultSet.getMetaData();
 
             // Iterate through columns (column index starts at 1) and put into the map
             for(int i = 1; i <= metaData.getColumnCount(); ++i)
@@ -46,7 +46,7 @@ public class StorageUtil
      */
     public static Object[] combine(Object[] object1, Object[] object2)
     {
-        Object[] finalObjects = new Object[object1.length + object2.length];
+        final Object[] finalObjects = new Object[object1.length + object2.length];
 
         int index = 0;
 

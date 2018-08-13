@@ -15,6 +15,10 @@ public class Credentials
             port,
             timeout;
 
+    private int maximumPoolSize = 10;
+    private String
+            encoding = "utf8",
+            collation = "utf8_general_ci";
     private String driverClass = "com.mysql.jdbc.Driver";
 
     /**
@@ -55,7 +59,7 @@ public class Credentials
      */
     public String getHost()
     {
-        return host;
+        return this.host;
     }
 
     /**
@@ -64,7 +68,7 @@ public class Credentials
      */
     public String getDatabase()
     {
-        return database;
+        return this.database;
     }
 
     /**
@@ -73,7 +77,7 @@ public class Credentials
      */
     public String getUsername()
     {
-        return username;
+        return this.username;
     }
 
     /**
@@ -82,7 +86,7 @@ public class Credentials
      */
     public String getPassword()
     {
-        return password;
+        return this.password;
     }
 
     /**
@@ -91,7 +95,7 @@ public class Credentials
      */
     public int getPort()
     {
-        return port;
+        return this.port;
     }
 
     /**
@@ -100,7 +104,34 @@ public class Credentials
      */
     public int getTimeout()
     {
-        return timeout;
+        return this.timeout;
+    }
+
+    /**
+     * Get the maximum pool size for this connection
+     * @return maximum pool size for the connection
+     */
+    public int getMaximumPoolSize()
+    {
+        return this.maximumPoolSize;
+    }
+
+    /**
+     * Get the encoding type used for this connection
+     * @return encoding type used
+     */
+    public String getEncoding()
+    {
+        return this.encoding;
+    }
+
+    /**
+     * Get the collation used for this connection
+     * @return collation type
+     */
+    public String getCollation()
+    {
+        return this.collation;
     }
 
     /**
@@ -109,7 +140,38 @@ public class Credentials
      */
     public String getDriverClass()
     {
-        return driverClass;
+        return this.driverClass;
+    }
+
+    /**
+     * Get the maximum pool size for this connection
+     * @return maximum pool size for the connection
+     */
+    public int setMaximumPoolSize(int maximumPoolSize)
+    {
+        return this.maximumPoolSize = maximumPoolSize;
+    }
+
+    /**
+     * Set the encoding type for this connection
+     * @param encoding to set to
+     * @return current instance for chaining
+     */
+    public Credentials setEncoding(String encoding)
+    {
+        this.encoding = encoding;
+        return this;
+    }
+
+    /**
+     * Set the collation type for this connection
+     * @param collation type to set
+     * @return current instance for chaining
+     */
+    public Credentials setCollation(String collation)
+    {
+        this.collation = collation;
+        return this;
     }
 
     /**
