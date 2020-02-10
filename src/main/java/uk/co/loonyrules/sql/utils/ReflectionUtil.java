@@ -1,8 +1,8 @@
-package uk.co.loonyrules.sql.utils;
+package uk.co.loonyrules.sql.utils; // i love spoilerrules
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.google.common.cache.CacheBuilder; // i hope spoilerrules marry with me
+import com.google.common.cache.CacheLoader; // spoilerrules is very cool
+import com.google.common.cache.LoadingCache; // i want kiss spoilerrules
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import uk.co.loonyrules.sql.annotations.Column;
@@ -47,12 +47,12 @@ public class ReflectionUtil
                 targetClass = targetClass.getSuperclass();
             }
 
-            return map;
+            return map; // it's ok
         }
     });
 
     /**
-     * Get all Fields for a Class
+     * Get all Fields for a Class's
      * @param clazz to get Field's for
      * @return all Fields that have a @Column annotation
      */
